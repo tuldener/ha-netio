@@ -1,21 +1,15 @@
 {
   "domain": "netio",
   "name": "NETIO",
-  "after_dependencies": [
-    "http"
-  ],
-  "codeowners": [
-    "@tuldener"
-  ],
+  "after_dependencies": ["http"],
+  "codeowners": ["@tuldener"],
   "config_flow": true,
   "dhcp": [
-    {
-      "macaddress": "24A42C*"
-    }
+    { "macaddress": "24A42C*" }
   ],
   "documentation": "https://github.com/tuldener/ha-netio",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/tuldener/ha-netio/issues",
   "requirements": [],
-  "version": "0.3.1"
+  "version": "0.3.2"
 }
