@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
+from typing import TYPE_CHECKING
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -20,8 +21,6 @@ from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-type NetioConfigEntry = ConfigEntry[NetioCoordinator]
-
 
 class NetioCoordinator(DataUpdateCoordinator[NetioDeviceState]):
     """Coordinator to manage fetching NETIO device state.
@@ -29,13 +28,13 @@ class NetioCoordinator(DataUpdateCoordinator[NetioDeviceState]):
     Polls the device via JSON API GET at a regular interval.
     """
 
-    config_entry: NetioConfigEntry
+    config_entry: ConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
         client: NetioApiClient,
-        config_entry: NetioConfigEntry,
+        config_entry: ConfigEntry,
     ) -> None:
         """Initialize the coordinator."""
         self.client = client
