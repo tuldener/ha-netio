@@ -157,6 +157,180 @@ This integration uses the **JSON over HTTP(s)** protocol exclusively:
 
 For protocol details, see the [NETIO JSON API documentation](https://www.netio-products.com/en/software/open-api).
 
+## MQTT-flex (Alternative: HA native MQTT)
+
+If you prefer push-based updates instead of polling, you can use NETIO's **MQTT-flex** protocol with Home Assistant's built-in MQTT integration. This does not require `ha-netio` — it uses HA's native MQTT support.
+
+> **Supported devices for MQTT-flex** (per [NETIO Wiki](https://wiki.netio-products.com/index.php?title=MQTT-flex)):
+> PowerCable MQTT 101x, PowerCable REST 101x, PowerPDU 4PS, PowerPDU 4KS,
+> PowerPDU 8QS, PowerDIN 4PZ, PowerBOX 3Px, PowerBOX 4Kx (FW ≥ 2.2.1)
+>
+> **Not supported:** PowerPDU 4C, NETIO 4, NETIO 4All (these use the older fixed MQTT, not MQTT-flex)
+
+### Step 1: MQTT-flex Config for the NETIO Device
+
+Paste the following JSON into your NETIO device under **M2M API Protocols → MQTT-flex**. Replace the broker credentials with your own (e.g. your Home Assistant Mosquitto broker).
+
+**Single-output device** (PowerCable 1Kx):
+
+```json
+{
+  "config": {
+    "broker": {
+      "url": "YOUR_HA_IP",
+      "protocol": "mqtt",
+      "port": 1883,
+      "ssl": false,
+      "type": "generic",
+      "username": "mqtt_user",
+      "password": "mqtt_password",
+      "clientid": "netio_${DEVICE_NAME}"
+    },
+    "subscribe": [
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/action",
+        "qos": 0,
+        "target": "OUTPUTS/1/ACTION",
+        "action": "${payload}"
+      }
+    ],
+    "publish": [
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/state",
+        "qos": 0, "retain": true,
+        "payload": "${OUTPUTS/1/STATE}",
+        "events": [{ "type": "change", "source": "OUTPUTS/1/STATE" }]
+      },
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/load",
+        "qos": 0, "retain": false,
+        "payload": "${OUTPUTS/1/LOAD}",
+        "events": [
+          { "type": "timer", "period": 60 },
+          { "type": "delta", "source": "OUTPUTS/1/LOAD", "delta": 1 }
+        ]
+      },
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/current",
+        "qos": 0, "retain": false,
+        "payload": "${OUTPUTS/1/CURRENT}",
+        "events": [
+          { "type": "timer", "period": 60 },
+          { "type": "delta", "source": "OUTPUTS/1/CURRENT", "delta": 10 }
+        ]
+      },
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/energy",
+        "qos": 0, "retain": false,
+        "payload": "${OUTPUTS/1/ENERGY}",
+        "events": [{ "type": "timer", "period": 300 }]
+      },
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/voltage",
+        "qos": 0, "retain": false,
+        "payload": "${OUTPUTS/1/VOLTAGE}",
+        "events": [{ "type": "timer", "period": 60 }]
+      },
+      {
+        "topic": "netio/${DEVICE_NAME}/output/1/frequency",
+        "qos": 0, "retain": false,
+        "payload": "${OUTPUTS/1/FREQUENCY}",
+        "events": [{ "type": "timer", "period": 60 }]
+      }
+    ]
+  }
+}
+```
+
+**Multi-output device** (PowerBOX 4Kx, PowerPDU 4KS, etc.): Duplicate the subscribe and publish entries for each output (replace `/1/` with `/2/`, `/3/`, `/4/` etc.). For global totals, use `OUTPUTS/TOTAL/LOAD`, `OUTPUTS/TOTAL/ENERGY`, etc.
+
+### Step 2: Home Assistant MQTT Configuration
+
+Add to your `configuration.yaml`:
+
+```yaml
+mqtt:
+  switch:
+    - name: "NETIO Output 1"
+      state_topic: "netio/MyNetio/output/1/state"
+      command_topic: "netio/MyNetio/output/1/action"
+      payload_on: "1"
+      payload_off: "0"
+      state_on: "1"
+      state_off: "0"
+      device_class: outlet
+
+  sensor:
+    - name: "NETIO Output 1 Load"
+      state_topic: "netio/MyNetio/output/1/load"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "NETIO Output 1 Current"
+      state_topic: "netio/MyNetio/output/1/current"
+      unit_of_measurement: "mA"
+      device_class: current
+      state_class: measurement
+
+    - name: "NETIO Output 1 Energy"
+      state_topic: "netio/MyNetio/output/1/energy"
+      unit_of_measurement: "Wh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "NETIO Voltage"
+      state_topic: "netio/MyNetio/output/1/voltage"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+
+    - name: "NETIO Frequency"
+      state_topic: "netio/MyNetio/output/1/frequency"
+      unit_of_measurement: "Hz"
+      device_class: frequency
+      state_class: measurement
+```
+
+Replace `MyNetio` with your NETIO device name (shown in the device web interface under Settings → System → Device name).
+
+### Additional MQTT Actions
+
+To restart an output (short OFF) or send a short ON pulse via MQTT, publish the action value to the command topic:
+
+| Action | Payload | Description |
+|--------|---------|-------------|
+| OFF | `0` | Turn output off |
+| ON | `1` | Turn output on |
+| Short OFF | `2` | Restart (off for delay, then on) |
+| Short ON | `3` | On for delay, then off |
+| Toggle | `4` | Invert current state |
+
+Example automation:
+
+```yaml
+# Restart Output 1 via MQTT
+action:
+  - action: mqtt.publish
+    data:
+      topic: "netio/MyNetio/output/1/action"
+      payload: "2"
+```
+
+### When to Use MQTT-flex vs. ha-netio
+
+| Aspect | ha-netio (JSON API) | MQTT-flex (native HA MQTT) |
+|--------|--------------------|-----------------------------|
+| Setup | Config flow UI | Manual YAML + device config |
+| Updates | Polling (30s) | Push (instant state changes) |
+| Energy data | Auto-detected | Manual per-sensor YAML |
+| Buttons (Restart etc.) | Built-in entities | Service calls / automations |
+| Dashboard card | Included | Standard HA cards |
+| Requires broker | No | Yes (Mosquitto etc.) |
+| Device auto-discovery | Yes | No |
+
+Both approaches can coexist — you can use ha-netio for the main integration and additionally subscribe to MQTT topics for faster state updates.
+
 ## License
 
 MIT
