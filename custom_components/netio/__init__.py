@@ -15,6 +15,7 @@ Protocol: JSON over HTTP(s) POST/GET to /netio.json
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME, Platform
@@ -31,13 +32,27 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
 ]
 
 type NetioConfigEntry = ConfigEntry[NetioCoordinator]
 
+_CARD_REGISTERED = False
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: NetioConfigEntry) -> bool:
     """Set up NETIO from a config entry."""
+    global _CARD_REGISTERED
+    if not _CARD_REGISTERED:
+        card_path = Path(__file__).parent / "www" / "netio-card.js"
+        if card_path.exists():
+            hass.http.register_static_path(
+                "/netio/netio-card.js",
+                str(card_path),
+                cache_headers=False,
+            )
+            _CARD_REGISTERED = True
+
     host = entry.data[CONF_HOST]
     port = entry.data[CONF_PORT]
     username = entry.data[CONF_USERNAME]
@@ -47,7 +62,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: NetioConfigEntry) -> boo
     scheme = "https" if use_ssl else "http"
     base_url = f"{scheme}://{host}:{port}"
 
-    # Per NETIO documentation, most devices use self-signed certificates
     session = async_get_clientsession(hass, verify_ssl=False)
     client = NetioApiClient(
         base_url=base_url,
