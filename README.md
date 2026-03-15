@@ -1,11 +1,11 @@
 # NETIO for Home Assistant
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![Validate](https://github.com/tuldener/ha-netio/actions/workflows/validate.yaml/badge.svg)](https://github.com/tuldener/ha-netio/actions/workflows/validate.yaml)
-[![GitHub Release](https://img.shields.io/github/v/release/tuldener/ha-netio)](https://github.com/tuldener/ha-netio/releases)
+[![Validate](https://github.com/FX6W9WZK/ha-netio/actions/workflows/validate.yaml/badge.svg)](https://github.com/FX6W9WZK/ha-netio/actions/workflows/validate.yaml)
+[![GitHub Release](https://img.shields.io/github/v/release/FX6W9WZK/ha-netio)](https://github.com/FX6W9WZK/ha-netio/releases)
 [![Built with Claude AI](https://img.shields.io/badge/Built_with-Claude_AI-D4A27F?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tuldener&repository=ha-netio&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=FX6W9WZK&repository=ha-netio&category=integration)
 
 Home Assistant custom integration for [NETIO](https://www.netio-products.com/) networked power sockets and PDUs.
 
@@ -52,7 +52,7 @@ The integration auto-detects metering support from the device's JSON API respons
 
 1. Open HACS in Home Assistant
 2. Click the three dots → **Custom repositories**
-3. Add `https://github.com/tuldener/ha-netio` as **Integration**
+3. Add `https://github.com/FX6W9WZK/ha-netio` as **Integration**
 4. Search for "NETIO" and install
 5. Restart Home Assistant
 
@@ -343,6 +343,11 @@ action:
 Both approaches can coexist — you can use ha-netio for the main integration and additionally subscribe to MQTT topics for faster state updates.
 
 ## Changelog
+
+### v0.9.9 (2025-03-15)
+
+**Changed**
+- **GitHub username changed** — All references updated from `tuldener` to `FX6W9WZK`: manifest.json (codeowners, documentation, issue_tracker), README badges and links, HACS install link, Lovelace card documentationURL.
 
 ### v0.9.8 (2025-03-15)
 
