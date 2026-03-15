@@ -27,9 +27,9 @@ Uses the **NETIO JSON over HTTP(s) M2M API** (Protocol Version 2.4) to read devi
 
 PowerPDU 4C, NETIO 4, NETIO 4All
 
-> Source: [netio-products.com](https://www.netio-products.com/en/products/all-products) and [obsolete products](https://www.netio-products.com/en/products/obsolete-products)
-
 **Tested Devices:** PowerPDU 4C
+
+> Source: [netio-products.com](https://www.netio-products.com/en/products/all-products) and [obsolete products](https://www.netio-products.com/en/products/obsolete-products)
 
 ### Energy Metering
 
