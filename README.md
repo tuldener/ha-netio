@@ -331,6 +331,72 @@ action:
 
 Both approaches can coexist — you can use ha-netio for the main integration and additionally subscribe to MQTT topics for faster state updates.
 
+## Changelog
+
+### v0.4.1 (2025-03-15)
+
+**Fixed**
+- Brand logo/icon not showing in HACS and HA — moved `icon.png` and `logo.png` to the correct location (`custom_components/netio/`)
+
+### v0.4.0 (2025-03-15)
+
+**Added**
+- **Per-outlet sub-devices** — Each power output is now registered as its own device in Home Assistant, linked to the parent NETIO device via `via_device`. This allows assigning individual outlets to different rooms.
+
+**Changed**
+- New base class `NetioOutputEntity` for all per-outlet entities (switch, output sensors, buttons)
+- `NetioEntity` remains for device-level entities (global sensors, digital inputs)
+- Entity names simplified (e.g. "Switch", "Restart") since the outlet name is already in the sub-device name
+
+**Migration from v0.3.x:** Remove the integration, restart HA, then re-add it. This ensures the device registry creates the new sub-devices correctly.
+
+### v0.3.6 (2025-03-14)
+
+**Fixed**
+- `ImportError: NetioConfigEntry` — all platform files (switch, sensor, binary_sensor, button) still imported the removed `NetioConfigEntry` type alias. Replaced with standard `ConfigEntry` from `homeassistant.config_entries`.
+
+### v0.3.5 (2025-03-14)
+
+**Fixed**
+- Python 3.12+ compatibility — removed `type NetioConfigEntry` statement (PEP 695 syntax not supported below Python 3.12). Uses standard `ConfigEntry` directly.
+
+### v0.3.4 (2025-03-14)
+
+**Fixed**
+- `SyntaxError` on HA startup caused by Python 3.12+ type alias syntax (`type X = Y`). Replaced with backward-compatible type annotation.
+
+### v0.3.3 (2025-03-14)
+
+**Fixed**
+- Lovelace card static path registration for HA 2025.x+ (`StaticPathConfig` API change)
+- Fallback to legacy `register_static_path()` for older HA versions
+
+### v0.3.2 (2025-03-14)
+
+**Added**
+- Custom Lovelace card with glassmorphism design (inspired by Bubble Card)
+- Visual card editor with configuration UI
+- Accordion layout, per-output action buttons, energy metering display
+- Dark/light theme auto-detection, customizable accent color
+- Multilingual support (German / English)
+
+### v0.3.1 (2025-03-14)
+
+**Added**
+- Button entities for NETIO output actions: Restart (Short OFF), Short ON, Toggle
+- Binary sensor entities for digital inputs (e.g. PowerDIN 4PZ)
+- S0 pulse counter sensors for digital inputs
+
+### v0.3.0 (2025-03-14)
+
+**Added**
+- Initial release as HACS custom integration
+- JSON over HTTP(s) API support (Protocol Version 2.4)
+- Switch entities for power output control (on/off)
+- Sensor entities for energy metering (current, load, energy, power factor, voltage, frequency)
+- Config flow UI with auto-detection of NETIO devices (DHCP via MAC prefix `24:A4:2C`)
+- Support for all current and obsolete NETIO products with JSON API
+
 ## License
 
 MIT
