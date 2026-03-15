@@ -3,6 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![Validate](https://github.com/tuldener/ha-netio/actions/workflows/validate.yaml/badge.svg)](https://github.com/tuldener/ha-netio/actions/workflows/validate.yaml)
 [![GitHub Release](https://img.shields.io/github/v/release/tuldener/ha-netio)](https://github.com/tuldener/ha-netio/releases)
+[![Built with Claude AI](https://img.shields.io/badge/Built_with-Claude_AI-D4A27F?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tuldener&repository=ha-netio&category=integration)
 
@@ -21,6 +22,8 @@ Uses the **NETIO JSON over HTTP(s) M2M API** (Protocol Version 2.4) to read devi
 | PowerBOX | 3Px, 4Kx |
 | PowerDIN | 4PZ, ZK3, ZP3 |
 | 3-Phase | PowerPDU VK6, FK6 |
+
+**Tested Devices:** PowerPDU 4PS
 
 ### Obsolete Products (still supported)
 
@@ -340,6 +343,12 @@ action:
 Both approaches can coexist — you can use ha-netio for the main integration and additionally subscribe to MQTT topics for faster state updates.
 
 ## Changelog
+
+### v0.8.5 (2025-03-15)
+
+**Changed**
+- **README: Tested devices** — Added PowerPDU 4PS as tested device under Current Products.
+- **README: Built with Claude AI badge** — Added transparent shield badge linking to Anthropic Claude.
 
 ### v0.8.4 (2025-03-15)
 
