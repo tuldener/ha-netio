@@ -344,6 +344,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.7 (2025-03-15)
+
+**Fixed**
+- **Parent device name not updating** — The `_update_device_names` method used `self.device_serial` which depends on `self.data`. During the first poll, `self.data` is still `None` (set by the framework AFTER `_async_update_data` returns), so the serial fell back to the config entry ID — the device was never found in the registry. Now computes the serial directly from the polled state.
+
 ### v0.9.6 (2025-03-15)
 
 **Added**
