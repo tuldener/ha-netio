@@ -333,6 +333,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.7.3 (2025-03-15)
+
+**Fixed**
+- **Labels and icons could not be saved in combined card editor** — HA freezes the config object passed to `setConfig()`. The editor tried to mutate it directly (`this._config.labels[entity] = value`), causing `TypeError: Cannot assign to read only property`. All event handlers now create new object copies via spread operator before dispatching `config-changed`.
+
 ### v0.7.2 (2025-03-15)
 
 **Fixed**
