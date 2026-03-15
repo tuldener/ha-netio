@@ -1,4 +1,4 @@
-const CARD_VERSION = "3.3.4";
+const CARD_VERSION = "4.0.0";
 const _netioLang = () => { try { return document.querySelector('home-assistant')?.hass?.language || 'en'; } catch(e) { return 'en'; } };
 const _netioI18n = {
   de: {
