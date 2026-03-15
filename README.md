@@ -344,6 +344,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.5 (2025-03-15)
+
+**Changed**
+- **Outlets sorted by displayed name** — The combined card (`netio-card`) and device card (`netio-device-card`) now sort outlets alphabetically by their resolved display name (label > socket name > entity_id).
+
 ### v0.9.4 (2025-03-15)
 
 **Fixed**
