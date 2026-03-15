@@ -4,6 +4,9 @@ Each NETIO device output is represented as a switch entity.
 Per JSON API documentation:
 - Output state: 0=OFF, 1=ON
 - Control actions: 0=off, 1=on, 2=short off, 3=short on, 4=toggle, 5=no change
+
+Each output is registered as a sub-device so it can be assigned
+to a different room in Home Assistant.
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from .api import NetioApiError
 from .const import ACTION_OFF, ACTION_ON, DOMAIN, STATE_OUTPUT_ON
 from homeassistant.config_entries import ConfigEntry
 from .coordinator import NetioCoordinator
-from .entity import NetioEntity
+from .entity import NetioOutputEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +43,11 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class NetioSwitch(NetioEntity, SwitchEntity):
-    """Representation of a NETIO power output as a switch."""
+class NetioSwitch(NetioOutputEntity, SwitchEntity):
+    """Representation of a NETIO power output as a switch.
+
+    Inherits from NetioOutputEntity to register as a sub-device.
+    """
 
     _attr_device_class = SwitchDeviceClass.OUTLET
 
@@ -52,8 +58,7 @@ class NetioSwitch(NetioEntity, SwitchEntity):
             coordinator: The data update coordinator
             output_id: 1-based output ID from the NETIO device
         """
-        super().__init__(coordinator)
-        self._output_id = output_id
+        super().__init__(coordinator, output_id)
         self._attr_unique_id = f"{coordinator.device_serial}_output_{output_id}"
 
     @property
@@ -67,11 +72,12 @@ class NetioSwitch(NetioEntity, SwitchEntity):
 
     @property
     def name(self) -> str | None:
-        """Return the name of the output as configured on the device."""
-        output = self._output
-        if output and output.name:
-            return output.name
-        return f"Output {self._output_id}"
+        """Return the name of the switch entity.
+
+        Since the outlet name is already in the sub-device name,
+        we return a simple "Switch" label here.
+        """
+        return "Switch"
 
     @property
     def is_on(self) -> bool | None:
