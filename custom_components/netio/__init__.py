@@ -1,16 +1,4 @@
-"""The NETIO integration.
-
-Integrates NETIO networked power sockets/PDUs with Home Assistant
-using the NETIO JSON over HTTP(s) M2M API protocol (Version 2.4).
-
-Supported devices (per NETIO documentation):
-  Current: PowerCable 1Kx/2KB/2PZ/2KZ/2PB, PowerBOX 3Px/4Kx,
-           PowerDIN 4PZ/ZK3/ZP3, PowerPDU 4PS/4KS/4PV/4KB/4PB/
-           8QV/8QS/8KS/8KF/8QB/8KB, PowerPDU VK6/FK6
-  Obsolete: PowerPDU 4C, NETIO 4, NETIO 4All
-
-Protocol: JSON over HTTP(s) POST/GET to /netio.json
-"""
+"""The NETIO integration."""
 
 from __future__ import annotations
 
@@ -44,11 +32,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not _CARD_REGISTERED:
         card_path = Path(__file__).parent / "www" / "netio-card.js"
         if card_path.exists():
-            hass.http.register_static_path(
-                "/netio/netio-card.js",
-                str(card_path),
-                cache_headers=False,
-            )
+            try:
+                # HA 2025.x+
+                from homeassistant.components.http import StaticPathConfig
+                await hass.http.async_register_static_paths(
+                    [StaticPathConfig("/netio/netio-card.js", str(card_path), False)]
+                )
+            except (ImportError, AttributeError):
+                try:
+                    # Older HA
+                    hass.http.register_static_path(
+                        "/netio/netio-card.js", str(card_path), cache_headers=False
+                    )
+                except AttributeError:
+                    _LOGGER.warning("Could not register Lovelace card resource")
             _CARD_REGISTERED = True
 
     host = entry.data[CONF_HOST]
