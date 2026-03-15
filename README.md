@@ -344,6 +344,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.3 (2025-03-15)
+
+**Changed**
+- **Action buttons 50% width** — ON/OFF, Toggle, Restart, Short ON buttons now each take 50% of the row width (2 per row). With all 3 action buttons enabled (4 buttons total), they wrap into 2 rows of 2.
+
 ### v0.9.2 (2025-03-15)
 
 **Changed**
