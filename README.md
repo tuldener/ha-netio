@@ -333,6 +333,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.6.2 (2025-03-15)
+
+**Added**
+- **Button options during initial setup** — When adding a new NETIO device, a second step now asks which button entities (Restart, Short ON, Toggle) should be enabled. This applies to both manual setup and DHCP discovery.
+
 ### v0.6.1 (2025-03-15)
 
 **Added**
