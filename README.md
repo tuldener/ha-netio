@@ -344,6 +344,14 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.1 (2025-03-15)
+
+**Changed**
+- **Default card titles adjusted:**
+  - `netio-card` (combined): Default title remains **"NETIO"**
+  - `netio-device-card`: Default title is now the **device name** (e.g. "stjane01") instead of "NETIO"
+  - `netio-outlet-card`: Default title is the **outlet name without device prefix** (e.g. "Kabine01" instead of "stjane01 Kabine01") — unchanged, already worked this way since v0.8.3
+
 ### v0.9.0 (2025-03-15)
 
 **Compliance review — HA & HACS standards verified**
