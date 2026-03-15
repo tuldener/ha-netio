@@ -1,4 +1,4 @@
-const CARD_VERSION = "2.5.3";
+const CARD_VERSION = "3.0.0";
 const _netioLang = () => { try { return document.querySelector('home-assistant')?.hass?.language || 'en'; } catch(e) { return 'en'; } };
 const _netioI18n = {
   de: {
@@ -13,7 +13,7 @@ const _netioI18n = {
     show_energy:'Energiedaten anzeigen',
     
     desc_main:'Alle NETIO Ausgänge mit Steuerung und Metering',
-    desc_outlet:'Einzelner NETIO Ausgang mit Steuerung',
+    desc_outlet:'Einzelner NETIO Ausgang mit Steuerung',desc_device:'Alle Ausgänge eines NETIO Gerätes',select_device:'Gerät wählen',no_device:'Kein Gerät ausgewählt',no_device_hint:'Wähle ein NETIO Gerät in der Konfiguration',
     global:'Gerät',select_entity:'Ausgang wählen',
     no_entity:'Kein Ausgang ausgewählt',no_entity_hint:'Wähle einen NETIO Ausgang in der Konfiguration',
     labels:'Bezeichnungen',icon:'Icon',icon_hint:'MDI Icon-Name (z.B. mdi:television)',label_hint:'Eigene Namen für Ausgänge (leer = Standard)',name:'Bezeichnung',
@@ -30,7 +30,7 @@ const _netioI18n = {
     show_energy:'Show energy data',
     
     desc_main:'All NETIO outputs with control and metering',
-    desc_outlet:'Single NETIO outlet with control',
+    desc_outlet:'Single NETIO outlet with control',desc_device:'All outputs of one NETIO device',select_device:'Select device',no_device:'No device selected',no_device_hint:'Select a NETIO device in the card configuration',
     global:'Device',select_entity:'Select outlet',
     no_entity:'No outlet selected',no_entity_hint:'Select a NETIO outlet in the card configuration',
     labels:'Labels',icon:'Icon',icon_hint:'MDI icon name (e.g. mdi:television)',label_hint:'Custom names for outputs (empty = default)',name:'Label',
@@ -56,6 +56,7 @@ function nThemeVars(isDark,accentHex){const a=accentHex||"#006B3F",r=nHexToRgb(a
 function nIsDark(t){return t==="dark"||(t==="auto"&&window.matchMedia("(prefers-color-scheme: dark)").matches);}
 function nAutoDiscover(h){if(!h||!h.entities)return[];return Object.values(h.entities).filter(e=>e.platform==="netio"&&e.entity_id.startsWith("switch.")&&!e.disabled_by&&!e.hidden_by).map(e=>e.entity_id).sort();}
 function nDeviceMap(h){if(!h||!h.entities)return{};const m={};Object.values(h.entities).forEach(e=>{if(e.platform==="netio"&&e.device_id){if(!m[e.device_id])m[e.device_id]={};const i=e.entity_id;if(i.startsWith("switch."))m[e.device_id].switch=i;else if(i.startsWith("button.")&&i.endsWith("_restart"))m[e.device_id].restart=i;else if(i.startsWith("button.")&&i.endsWith("_short_on"))m[e.device_id].short_on=i;else if(i.startsWith("button.")&&i.endsWith("_toggle"))m[e.device_id].toggle=i;else if(i.startsWith("sensor.")&&i.endsWith("_current"))m[e.device_id].current=i;else if(i.startsWith("sensor.")&&i.endsWith("_load"))m[e.device_id].load=i;else if(i.startsWith("sensor.")&&i.endsWith("_energy")&&!i.endsWith("_reverse_energy"))m[e.device_id].energy=i;else if(i.startsWith("sensor.")&&i.endsWith("_power_factor"))m[e.device_id].power_factor=i;else if(i.startsWith("sensor.")&&i.endsWith("_voltage"))m[e.device_id].voltage=i;else if(i.startsWith("sensor.")&&i.endsWith("_frequency"))m[e.device_id].frequency=i;else if(i.startsWith("sensor.")&&i.endsWith("_total_load"))m[e.device_id].total_load=i;else if(i.startsWith("sensor.")&&i.endsWith("_total_energy")&&!i.endsWith("_reverse_energy"))m[e.device_id].total_energy=i;else if(i.startsWith("sensor.")&&i.endsWith("_total_current"))m[e.device_id].total_current=i;else if(i.startsWith("sensor.")&&i.endsWith("_total_power_factor"))m[e.device_id].total_pf=i;}});return m;}
+function nParentDevices(h){if(!h||!h.devices||!h.entities)return[];const devs=Object.values(h.devices);const netioEnts=Object.values(h.entities).filter(e=>e.platform==="netio");const parentIds=new Set();netioEnts.forEach(e=>{if(e.device_id){const dev=h.devices[e.device_id];if(dev&&!dev.via_device_id)parentIds.add(e.device_id);}});return Array.from(parentIds).map(did=>{const dev=h.devices[did];const childDevIds=new Set([did]);devs.forEach(d=>{if(d.via_device_id===did)childDevIds.add(d.id);});const switches=netioEnts.filter(e=>e.entity_id.startsWith("switch.")&&childDevIds.has(e.device_id)&&!e.disabled_by&&!e.hidden_by).map(e=>e.entity_id).sort();return{device_id:did,name:dev.name_by_user||dev.name||"NETIO",model:dev.model||"",switches};}).filter(p=>p.switches.length>0);}
 function nSwitchToDevice(h){if(!h||!h.entities)return{};const m={};Object.values(h.entities).forEach(e=>{if(e.platform==="netio"&&e.entity_id.startsWith("switch.")&&e.device_id)m[e.entity_id]=e.device_id;});return m;}
 function nOutputName(cfg,eid,fn){const l=(cfg.labels||{});if(l[eid])return l[eid];if(cfg.name)return cfg.name;if(!fn)return eid;return fn.replace(/^NETIO\s+/i,"").replace(/^netio_/i,"").replace(/\s+Switch$/i,"")||fn;}
 function nEditorStyles(){return`:host{display:block;}.editor{padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}.field{margin-bottom:12px;}label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--primary-text-color,#333);}input,select{width:100%;padding:8px 12px;border:1px solid var(--divider-color,#ddd);border-radius:8px;font-size:14px;background:var(--card-background-color,#fff);color:var(--primary-text-color,#333);}.hint{font-size:11px;color:var(--secondary-text-color,#888);margin-top:2px;}.checkbox-field{display:flex;align-items:center;gap:8px;margin-bottom:8px;}.checkbox-field input{width:auto;}.label-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}.label-row .lbl-name{font-size:11px;color:var(--secondary-text-color,#888);min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.label-row input{flex:1;}.label-row ha-icon-picker{flex:0 0 50px;--mdc-icon-size:20px;}.section-title{font-size:13px;font-weight:700;margin:14px 0 8px;color:var(--primary-text-color,#333);}`;}
@@ -63,6 +64,7 @@ function nBaseStyles(t){return`:host{display:block;--accent:${t.accent};--accent
 // Registration
 window.customCards=window.customCards||[];
 if(!window.customCards.find(c=>c.type==="netio-card"))window.customCards.push({type:"netio-card",name:"NETIO",description:nT("desc_main"),preview:true,documentationURL:"https://github.com/tuldener/ha-netio"});
+if(!window.customCards.find(c=>c.type==="netio-device-card"))window.customCards.push({type:"netio-device-card",name:"NETIO Device",description:nT("desc_device"),preview:true,documentationURL:"https://github.com/tuldener/ha-netio"});
 if(!window.customCards.find(c=>c.type==="netio-outlet-card"))window.customCards.push({type:"netio-outlet-card",name:"NETIO Outlet",description:nT("desc_outlet"),preview:true,documentationURL:"https://github.com/tuldener/ha-netio"});
 
 const _Lookup={
@@ -165,9 +167,56 @@ class NetioOutletCardEditor extends HTMLElement{
   _fire(){this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config},bubbles:true,composed:true}));}
 }
 
+// ═══ Device Card ═══
+class NetioDeviceCard extends HTMLElement{
+  constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=null;this._expanded={};this._rendered=false;this._deviceMap={};this._switchToDevice={};}
+  static getConfigElement(){return document.createElement("netio-device-card-editor");}
+  static getStubConfig(){return{device_id:"",labels:{},icons:{},show_energy:true,theme:"auto",accent_color:""};}
+  setConfig(config){if(!config)throw new Error("Invalid");this._config={device_id:"",labels:{},icons:{},show_energy:true,theme:"auto",accent_color:"",...config};this._rendered=false;this._render();}
+  set hass(h){this._hass=h;this._deviceMap=nDeviceMap(h);this._switchToDevice=nSwitchToDevice(h);if(!this._rendered){this._render();return;}this._updateExisting();}
+  _getDeviceInfo(){if(!this._hass||!this._hass.devices||!this._config.device_id)return null;return this._hass.devices[this._config.device_id]||null;}
+  _getOutputs(){if(!this._hass||!this._config.device_id)return[];const parents=nParentDevices(this._hass);const p=parents.find(x=>x.device_id===this._config.device_id);if(!p)return[];return p.switches.map(eid=>{const e=this._hass.states[eid];if(!e)return null;return{entityId:eid,entity:e,name:nOutputName(this._config,eid,e.attributes.friendly_name)};}).filter(Boolean);}
+  _toggleExpand(eid){if(!this._hasActions(eid))return;const w=this._expanded[eid];this._expanded={};if(!w)this._expanded[eid]=true;this._rendered=false;this._render();}
+  _updateExisting(){const r=this.shadowRoot;if(!r)return;const o=this._getOutputs();const ex=r.querySelectorAll(".output-card");if(!ex||ex.length!==o.length){this._rendered=false;this._render();return;}const on=o.filter(x=>x.entity.state==="on").length;const b=r.querySelector(".n-header-badge");if(b)b.textContent=`${on}/${o.length}`;o.forEach(x=>{const c=r.querySelector(`.output-card[data-entity="${x.entityId}"]`);if(!c)return;const isOn=x.entity.state==="on";c.classList.toggle("off",!isOn);const ic=c.querySelector(".out-icon");if(ic){ic.classList.toggle("on",isOn);const ci=this._config.icons&&this._config.icons[x.entityId];if(!ci)ic.innerHTML=nSvg(isOn?"plug":"power");}const tg=c.querySelector(".out-toggle");if(tg){tg.className=`out-toggle ${isOn?'on':'off'}`;}const bg=c.querySelector(".out-power-bg");if(bg)bg.style.opacity=isOn?"1":"0";});}
+  _render(){if(!this.shadowRoot||!this._hass)return;const dev=this._getDeviceInfo();const o=this._getOutputs();const t=nThemeVars(nIsDark(this._config.theme),this._config.accent_color||"");
+    if(!dev||!this._config.device_id){this.shadowRoot.innerHTML=`<style>${nBaseStyles(t)}</style><div class="n-card"><div class="n-empty">${nSvg('plug',48)}<p>${nT("no_device")}</p><span>${nT("no_device_hint")}</span></div></div>`;return;}
+    const on=o.filter(x=>x.entity.state==="on").length;const title=this._config.title||dev.name_by_user||dev.name||"NETIO";const v=this._globalSensor("voltage"),f=this._globalSensor("frequency"),tl=this._globalSensor("total_load");
+    this.shadowRoot.innerHTML=`<style>${nBaseStyles(t)}</style><div class="n-card"><div class="n-header"><div class="n-header-icon">${nNetioLogo()}</div><div class="n-header-content"><h2 class="n-header-title">${nEscape(title)}</h2><span class="n-header-sub">${o.length} ${nPlural(o.length,nT('output_1'),nT('output_n'))}${dev.model?` · ${nEscape(dev.model)}`:''}</span></div><div class="n-header-badge">${on}/${o.length}</div></div>${this._config.show_energy&&(v!=null||tl!=null)?`<div class="n-global">${v!=null?`<span class="n-global-chip"><b>${v.toFixed(1)} V</b> ${nT("voltage")}</span>`:''}${f!=null?`<span class="n-global-chip"><b>${f.toFixed(1)} Hz</b> ${nT("frequency")}</span>`:''}${tl!=null?`<span class="n-global-chip"><b>${tl} W</b> ${nT("total_load")}</span>`:''}</div>`:''}<div class="outputs-container">${o.length>0?o.map(x=>this._renderOutput(x,t)).join(""):`<div class="n-empty">${nSvg('plug',48)}<p>${nT("no_outputs")}</p></div>`}</div></div>`;
+    this._rendered=true;this._attachEvents();}
+  _renderOutput(o,t){const exp=this._expanded[o.entityId]||false;const isOn=o.entity.state==="on";const ld=this._sensorVal(o.entityId,"load");const det=[];if(isOn&&ld!=null)det.push(`${ld} W`);if(!isOn)det.push(nT("off"));
+    return`<div class="output-card ${exp?'expanded':''} ${isOn?'':'off'}" data-entity="${o.entityId}"><div class="out-main" data-toggle="${o.entityId}"><div class="out-power-bg" style="opacity:${isOn?1:0}"></div><div class="out-content"><div class="out-icon ${isOn?'on':''}">${nIcon(this._config.icons&&this._config.icons[o.entityId],nSvg(isOn?'plug':'power'),22)}</div><div class="out-info"><span class="out-name">${nEscape(o.name)}</span><span class="out-detail">${det.join(' · ')}</span></div><button class="out-toggle ${isOn?'on':'off'}" data-switch="${o.entityId}"></button>${this._hasActions(o.entityId)?`<div class="out-chevron ${exp?'rotated':''}">${nSvg('chevron',20)}</div>`:''}</div></div>${exp?_renderCtrl(this,o,t):''}</div>`;}
+  _attachEvents(){const r=this.shadowRoot;if(!r)return;r.querySelectorAll("[data-toggle]").forEach(el=>{el.addEventListener("click",e=>{if(e.target.closest("[data-switch]")||e.target.closest("[data-press]")||e.target.closest(".out-toggle"))return;this._toggleExpand(el.dataset.toggle);});});_attachEvt(r,this);}
+  getCardSize(){return 1+this._getOutputs().length;}
+}
+Object.assign(NetioDeviceCard.prototype,_Lookup);
+
+// ═══ Device Card Editor ═══
+class NetioDeviceCardEditor extends HTMLElement{
+  constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=null;this._hassSet=false;this._didRender=false;}
+  set hass(h){this._hass=h;if(!this._hassSet){this._hassSet=true;this._render();}}
+  setConfig(c){this._config={labels:{},icons:{},...c};if(!this._didRender)this._render();}
+  _getDevices(){if(!this._hass)return[];return nParentDevices(this._hass);}
+  _getSwitchesForDevice(){if(!this._hass||!this._config.device_id)return[];const parents=nParentDevices(this._hass);const p=parents.find(x=>x.device_id===this._config.device_id);if(!p)return[];return p.switches.map(eid=>({entity_id:eid,name:this._hass.states[eid]?.attributes?.friendly_name||eid})).sort((a,b)=>a.name.localeCompare(b.name));}
+  _render(){if(!this.shadowRoot)return;const devs=this._getDevices(),sw=this._getSwitchesForDevice(),lb=this._config.labels||{};const cur=this._config.device_id||"";
+    this.shadowRoot.innerHTML=`<style>${nEditorStyles()}</style><div class="editor"><div class="field"><label>${nT("select_device")}</label><select id="device_id"><option value="">-- ${nT("select_device")} --</option>${devs.map(d=>`<option value="${d.device_id}" ${d.device_id===cur?'selected':''}>${nEscape(d.name)}${d.model?` (${nEscape(d.model)})`:''} — ${d.switches.length} ${nPlural(d.switches.length,nT('output_1'),nT('output_n'))}</option>`).join("")}</select></div><div class="field"><label>${nT("title")}</label><input type="text" id="title" value="${nEscape(this._config.title||'')}" placeholder="${nT("auto")}"/></div><div class="field"><label>${nT("accent_color")}</label><div style="display:flex;gap:8px;align-items:center;"><input type="color" id="accent_color" value="${this._config.accent_color||'#006B3F'}" style="width:48px;height:36px;padding:2px;border-radius:8px;cursor:pointer;"/><input type="text" id="accent_hex" value="${this._config.accent_color||'#006B3F'}" placeholder="#006B3F" style="flex:1;"/><button id="accent_reset" style="padding:6px 10px;border-radius:8px;border:1px solid var(--divider-color,#ddd);background:transparent;cursor:pointer;font-size:12px;">↺ ${nT("reset")}</button></div></div><div class="field"><label>${nT("design")}</label><select id="theme"><option value="auto" ${this._config.theme==='auto'?'selected':''}>${nT("auto")}</option><option value="dark" ${this._config.theme==='dark'?'selected':''}>${nT("dark")}</option><option value="light" ${this._config.theme==='light'?'selected':''}>${nT("light")}</option></select></div><div class="checkbox-field"><input type="checkbox" id="show_energy" ${this._config.show_energy!==false?'checked':''}/><label for="show_energy">${nT("show_energy")}</label></div>${sw.length>0?`<div class="section-title">${nT("labels")}</div><div class="hint" style="margin-bottom:8px;">${nT("label_hint")}</div>${sw.map(s=>`<div class="label-row"><span class="lbl-name" title="${nEscape(s.name)}">${nEscape(s.name)}</span><input type="text" class="label-input" data-entity="${s.entity_id}" value="${nEscape(lb[s.entity_id]||'')}" placeholder="${nEscape(s.name)}"/><ha-icon-picker class="icon-picker" data-entity="${s.entity_id}" style="flex:0 0 50px;"></ha-icon-picker></div>`).join("")}`:''}</div>`;
+    this.shadowRoot.getElementById("device_id").addEventListener("change",e=>{this._config={...this._config,device_id:e.target.value,labels:{},icons:{}};this._didRender=false;this._render();this._fire();});
+    this.shadowRoot.getElementById("title").addEventListener("change",e=>{this._config={...this._config,title:e.target.value};this._fire();});
+    const cp=this.shadowRoot.getElementById("accent_color"),ch=this.shadowRoot.getElementById("accent_hex");
+    cp.addEventListener("input",e=>{ch.value=e.target.value;this._config={...this._config,accent_color:e.target.value};this._fire();});
+    ch.addEventListener("change",e=>{const v=e.target.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){cp.value=v;this._config={...this._config,accent_color:v};this._fire();}});
+    this.shadowRoot.getElementById("accent_reset").addEventListener("click",()=>{cp.value="#006B3F";ch.value="#006B3F";this._config={...this._config,accent_color:""};this._fire();});
+    this.shadowRoot.getElementById("theme").addEventListener("change",e=>{this._config={...this._config,theme:e.target.value};this._fire();});
+    ["show_energy"].forEach(id=>{this.shadowRoot.getElementById(id).addEventListener("change",e=>{this._config={...this._config,[id]:e.target.checked};this._fire();});});
+    this.shadowRoot.querySelectorAll(".label-input").forEach(el=>{el.addEventListener("change",e=>{const labels={...(this._config.labels||{})};const v=e.target.value.trim();if(v)labels[e.target.dataset.entity]=v;else delete labels[e.target.dataset.entity];this._config={...this._config,labels};this._fire();});});
+    this.shadowRoot.querySelectorAll(".icon-picker").forEach(el=>{const eid=el.dataset.entity;el.value=(this._config.icons||{})[eid]||"";el.addEventListener("value-changed",e=>{const icons={...(this._config.icons||{})};const v=(e.detail&&e.detail.value)||"";if(v)icons[eid]=v;else delete icons[eid];this._config={...this._config,icons};this._fire();});});
+    this._didRender=true;}
+  _fire(){this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config},bubbles:true,composed:true}));}
+}
+
 // ═══ Define ═══
 const _def=(n,c)=>{if(!customElements.get(n))customElements.define(n,c);};
 _def("netio-card",NetioCard);_def("netio-card-editor",NetioCardEditor);
 _def("netio-outlet-card",NetioOutletCard);_def("netio-outlet-card-editor",NetioOutletCardEditor);
+_def("netio-device-card",NetioDeviceCard);_def("netio-device-card-editor",NetioDeviceCardEditor);
 
 console.info(`%c NETIO-CARD %c v${CARD_VERSION} `,"color:white;background:#006B3F;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px;","color:#006B3F;background:#d4edda;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0;");
