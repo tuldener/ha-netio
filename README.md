@@ -333,6 +333,13 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.6.5 (2025-03-15)
+
+**Changed**
+- **Toggle switch replaces status badge** — The "Ein"/"Aus" text badge is replaced by a round iOS-style toggle switch (green = on, red = off). Clicking the toggle switches the outlet on/off.
+- **Chevron/dropdown hidden when no actions** — The expand arrow is only shown if at least one of the three button entities (Restart, Short ON, Toggle) is enabled. If all are disabled, the output row has no dropdown.
+- **Click-to-expand guarded** — Clicking the row only expands if there are action buttons to show.
+
 ### v0.6.4 (2025-03-15)
 
 **Fixed**
