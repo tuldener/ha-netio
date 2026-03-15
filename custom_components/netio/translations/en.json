@@ -21,6 +21,17 @@
           "password": "Password",
           "use_ssl": "Use HTTPS"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure NETIO connection",
+        "description": "Update the connection settings for your NETIO device.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "use_ssl": "Use HTTPS"
+        }
       }
     },
     "error": {
