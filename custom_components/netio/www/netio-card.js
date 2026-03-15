@@ -1,4 +1,4 @@
-const CARD_VERSION = "2.1.1";
+const CARD_VERSION = "2.2.0";
 const _netioLang = () => { try { return document.querySelector('home-assistant')?.hass?.language || 'en'; } catch(e) { return 'en'; } };
 const _netioI18n = {
   de: {
@@ -10,8 +10,8 @@ const _netioI18n = {
     title:'Titel',accent_color:'Akzentfarbe',reset:'Standard',
     accent_hint:'Standard: #006B3F (NETIO Grün)',design:'Design',
     auto:'Automatisch',dark:'Dunkel',light:'Hell',
-    show_energy:'Energiedaten anzeigen',show_restart:'Neustart-Button anzeigen',
-    show_short_on:'Kurz-Ein-Button anzeigen',show_toggle:'Umschalten-Button anzeigen',
+    show_energy:'Energiedaten anzeigen',
+    
     desc_main:'Alle NETIO Ausgänge mit Steuerung und Metering',
     desc_outlet:'Einzelner NETIO Ausgang mit Steuerung',
     global:'Gerät',select_entity:'Ausgang wählen',
@@ -27,8 +27,8 @@ const _netioI18n = {
     title:'Title',accent_color:'Accent color',reset:'Default',
     accent_hint:'Default: #006B3F (NETIO Green)',design:'Design',
     auto:'Automatic',dark:'Dark',light:'Light',
-    show_energy:'Show energy data',show_restart:'Show restart button',
-    show_short_on:'Show short ON button',show_toggle:'Show toggle button',
+    show_energy:'Show energy data',
+    
     desc_main:'All NETIO outputs with control and metering',
     desc_outlet:'Single NETIO outlet with control',
     global:'Device',select_entity:'Select outlet',
@@ -67,13 +67,13 @@ if(!window.customCards.find(c=>c.type==="netio-outlet-card"))window.customCards.
 const _Lookup={
   _sensorVal(sw,k){if(!this._hass)return null;const d=this._switchToDevice[sw];if(!d||!this._deviceMap[d])return null;const e=this._deviceMap[d][k];if(!e)return null;const s=this._hass.states[e];if(!s)return null;const v=parseFloat(s.state);return isNaN(v)?null:v;},
   _globalSensor(sfx){if(!this._hass||!this._hass.entities)return null;for(const e of Object.values(this._hass.entities)){if(e.platform==="netio"&&e.entity_id.startsWith("sensor.")&&e.entity_id.endsWith("_"+sfx)&&!e.disabled_by){const s=this._hass.states[e.entity_id];if(s){const v=parseFloat(s.state);if(!isNaN(v))return v;}}}return null;},
-  _findBtn(sw,a){if(!this._hass)return null;const d=this._switchToDevice[sw];if(!d||!this._deviceMap[d])return null;return this._deviceMap[d][a]||null;},
+  _findBtn(sw,a){if(!this._hass)return null;const d=this._switchToDevice[sw];if(!d||!this._deviceMap[d])return null;const eid=this._deviceMap[d][a];if(eid&&this._hass.states[eid])return eid;return null;},
 };
 function _renderCtrl(card,o,t){
   const isOn=o.entity.state==="on",cur=card._sensorVal(o.entityId,"current"),ld=card._sensorVal(o.entityId,"load"),en=card._sensorVal(o.entityId,"energy"),pf=card._sensorVal(o.entityId,"power_factor");
   const rb=card._findBtn(o.entityId,"restart"),sb=card._findBtn(o.entityId,"short_on"),tb=card._findBtn(o.entityId,"toggle");
   const c=card._config;
-  return`<div class="out-controls"><div class="ctrl-row"><button class="n-btn ${isOn?'off-btn':'on-btn'}" data-switch="${o.entityId}">${nSvg('power',16)} ${isOn?nT("off"):nT("on")}</button>${c.show_toggle!==false&&tb?`<button class="n-btn primary" data-press="${tb}">${nSvg('toggle',16)} ${nT("toggle")}</button>`:''}${c.show_restart!==false&&rb?`<button class="n-btn danger" data-press="${rb}">${nSvg('restart',16)} ${nT("restart")}</button>`:''}${c.show_short_on!==false&&sb?`<button class="n-btn" data-press="${sb}">${nSvg('timer',16)} ${nT("short_on")}</button>`:''}</div>${c.show_energy!==false&&(cur!=null||ld!=null||en!=null)?`<div class="energy-grid">${ld!=null?`<div class="energy-chip"><div class="energy-val">${ld}</div><div class="energy-label">W</div></div>`:''}${cur!=null?`<div class="energy-chip"><div class="energy-val">${cur}</div><div class="energy-label">mA</div></div>`:''}${en!=null?`<div class="energy-chip"><div class="energy-val">${en}</div><div class="energy-label">Wh</div></div>`:''}${pf!=null?`<div class="energy-chip"><div class="energy-val">${pf.toFixed(2)}</div><div class="energy-label">PF</div></div>`:''}</div>`:''}</div>`;
+  return`<div class="out-controls"><div class="ctrl-row"><button class="n-btn ${isOn?'off-btn':'on-btn'}" data-switch="${o.entityId}">${nSvg('power',16)} ${isOn?nT("off"):nT("on")}</button>${tb?`<button class="n-btn primary" data-press="${tb}">${nSvg('toggle',16)} ${nT("toggle")}</button>`:''}${rb?`<button class="n-btn danger" data-press="${rb}">${nSvg('restart',16)} ${nT("restart")}</button>`:''}${sb?`<button class="n-btn" data-press="${sb}">${nSvg('timer',16)} ${nT("short_on")}</button>`:''}</div>${c.show_energy!==false&&(cur!=null||ld!=null||en!=null)?`<div class="energy-grid">${ld!=null?`<div class="energy-chip"><div class="energy-val">${ld}</div><div class="energy-label">W</div></div>`:''}${cur!=null?`<div class="energy-chip"><div class="energy-val">${cur}</div><div class="energy-label">mA</div></div>`:''}${en!=null?`<div class="energy-chip"><div class="energy-val">${en}</div><div class="energy-label">Wh</div></div>`:''}${pf!=null?`<div class="energy-chip"><div class="energy-val">${pf.toFixed(2)}</div><div class="energy-label">PF</div></div>`:''}</div>`:''}</div>`;
 }
 function _attachEvt(r,h){if(!r)return;r.querySelectorAll("[data-switch]").forEach(el=>{el.addEventListener("click",e=>{e.stopPropagation();const eid=el.dataset.switch;h.callService("switch",h.states[eid]?.state==="on"?"turn_off":"turn_on",{entity_id:eid});});});r.querySelectorAll("[data-press]").forEach(el=>{el.addEventListener("click",e=>{e.stopPropagation();h.callService("button","press",{entity_id:el.dataset.press});});});}
 
@@ -81,8 +81,8 @@ function _attachEvt(r,h){if(!r)return;r.querySelectorAll("[data-switch]").forEac
 class NetioCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=null;this._expanded={};this._rendered=false;this._deviceMap={};this._switchToDevice={};}
   static getConfigElement(){return document.createElement("netio-card-editor");}
-  static getStubConfig(){return{title:"NETIO",entities:[],labels:{},show_energy:true,show_restart:true,show_short_on:true,show_toggle:true,theme:"auto",accent_color:""};}
-  setConfig(config){if(!config)throw new Error("Invalid");this._config={title:"NETIO",entities:[],labels:{},show_energy:true,show_restart:true,show_short_on:true,show_toggle:true,theme:"auto",accent_color:"",...config};if(config.show_actions===false&&!("show_restart" in config)){this._config.show_restart=false;this._config.show_short_on=false;this._config.show_toggle=false;}this._rendered=false;this._render();}
+  static getStubConfig(){return{title:"NETIO",entities:[],labels:{},show_energy:true,theme:"auto",accent_color:""};}
+  setConfig(config){if(!config)throw new Error("Invalid");this._config={title:"NETIO",entities:[],labels:{},show_energy:true,theme:"auto",accent_color:"",...config};this._rendered=false;this._render();}
   set hass(h){this._hass=h;this._deviceMap=nDeviceMap(h);this._switchToDevice=nSwitchToDevice(h);if(!this._rendered){this._render();return;}this._updateExisting();}
   _getOutputs(){if(!this._hass)return[];let ids=this._config.entities||[];if(!ids.length)ids=nAutoDiscover(this._hass);return ids.map(eid=>{const e=this._hass.states[eid];if(!e)return null;return{entityId:eid,entity:e,name:nOutputName(this._config,eid,e.attributes.friendly_name)};}).filter(Boolean);}
   _toggleExpand(eid){const w=this._expanded[eid];this._expanded={};if(!w)this._expanded[eid]=true;this._rendered=false;this._render();}
@@ -104,14 +104,13 @@ class NetioCardEditor extends HTMLElement{
   setConfig(c){this._config={labels:{},...c};this._render();}
   _getSwitches(){if(!this._hass||!this._hass.entities)return[];return Object.values(this._hass.entities).filter(e=>e.platform==="netio"&&e.entity_id.startsWith("switch.")&&!e.disabled_by).map(e=>({entity_id:e.entity_id,name:this._hass.states[e.entity_id]?.attributes?.friendly_name||e.entity_id})).sort((a,b)=>a.name.localeCompare(b.name));}
   _render(){if(!this.shadowRoot)return;const sw=this._getSwitches(),lb=this._config.labels||{};
-    this.shadowRoot.innerHTML=`<style>${nEditorStyles()}</style><div class="editor"><div class="field"><label>${nT("title")}</label><input type="text" id="title" value="${nEscape(this._config.title||'NETIO')}"/></div><div class="field"><label>${nT("accent_color")}</label><div style="display:flex;gap:8px;align-items:center;"><input type="color" id="accent_color" value="${this._config.accent_color||'#006B3F'}" style="width:48px;height:36px;padding:2px;border-radius:8px;cursor:pointer;"/><input type="text" id="accent_hex" value="${this._config.accent_color||'#006B3F'}" placeholder="#006B3F" style="flex:1;"/><button id="accent_reset" style="padding:6px 10px;border-radius:8px;border:1px solid var(--divider-color,#ddd);background:transparent;cursor:pointer;font-size:12px;">↺ ${nT("reset")}</button></div><div class="hint">${nT("accent_hint")}</div></div><div class="field"><label>${nT("design")}</label><select id="theme"><option value="auto" ${this._config.theme==='auto'?'selected':''}>${nT("auto")}</option><option value="dark" ${this._config.theme==='dark'?'selected':''}>${nT("dark")}</option><option value="light" ${this._config.theme==='light'?'selected':''}>${nT("light")}</option></select></div><div class="checkbox-field"><input type="checkbox" id="show_energy" ${this._config.show_energy!==false?'checked':''}/><label for="show_energy">${nT("show_energy")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_restart" ${this._config.show_restart!==false?'checked':''}/><label for="show_restart">${nT("show_restart")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_short_on" ${this._config.show_short_on!==false?'checked':''}/><label for="show_short_on">${nT("show_short_on")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_toggle" ${this._config.show_toggle!==false?'checked':''}/><label for="show_toggle">${nT("show_toggle")}</label></div>${sw.length>0?`<div class="section-title">${nT("labels")}</div><div class="hint" style="margin-bottom:8px;">${nT("label_hint")}</div>${sw.map(s=>`<div class="label-row"><span class="lbl-name" title="${nEscape(s.name)}">${nEscape(s.name)}</span><input type="text" class="label-input" data-entity="${s.entity_id}" value="${nEscape(lb[s.entity_id]||'')}" placeholder="${nEscape(s.name)}"/></div>`).join("")}`:''}</div>`;
     this.shadowRoot.getElementById("title").addEventListener("change",e=>{this._config.title=e.target.value;this._fire();});
     const cp=this.shadowRoot.getElementById("accent_color"),ch=this.shadowRoot.getElementById("accent_hex");
     cp.addEventListener("input",e=>{ch.value=e.target.value;this._config.accent_color=e.target.value;this._fire();});
     ch.addEventListener("change",e=>{const v=e.target.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){cp.value=v;this._config.accent_color=v;this._fire();}});
     this.shadowRoot.getElementById("accent_reset").addEventListener("click",()=>{cp.value="#006B3F";ch.value="#006B3F";this._config.accent_color="";this._fire();});
     this.shadowRoot.getElementById("theme").addEventListener("change",e=>{this._config.theme=e.target.value;this._fire();});
-    ["show_energy","show_restart","show_short_on","show_toggle"].forEach(id=>{this.shadowRoot.getElementById(id).addEventListener("change",e=>{this._config[id]=e.target.checked;this._fire();});});
+    ["show_energy"].forEach(id=>{this.shadowRoot.getElementById(id).addEventListener("change",e=>{this._config[id]=e.target.checked;this._fire();});});
     this.shadowRoot.querySelectorAll(".label-input").forEach(el=>{el.addEventListener("change",e=>{if(!this._config.labels)this._config.labels={};const v=e.target.value.trim();if(v)this._config.labels[e.target.dataset.entity]=v;else delete this._config.labels[e.target.dataset.entity];this._fire();});});
   }
   _fire(){this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config},bubbles:true,composed:true}));}
@@ -121,8 +120,8 @@ class NetioCardEditor extends HTMLElement{
 class NetioOutletCard extends HTMLElement{
   constructor(){super();this.attachShadow({mode:"open"});this._config={};this._hass=null;this._expanded=false;this._deviceMap={};this._switchToDevice={};}
   static getConfigElement(){return document.createElement("netio-outlet-card-editor");}
-  static getStubConfig(){return{entity:"",name:"",show_energy:true,show_restart:true,show_short_on:true,show_toggle:true,theme:"auto",accent_color:""};}
-  setConfig(config){if(!config)throw new Error("Invalid");this._config={entity:"",name:"",show_energy:true,show_restart:true,show_short_on:true,show_toggle:true,theme:"auto",accent_color:"",...config};this._render();}
+  static getStubConfig(){return{entity:"",name:"",show_energy:true,theme:"auto",accent_color:""};}
+  setConfig(config){if(!config)throw new Error("Invalid");this._config={entity:"",name:"",show_energy:true,theme:"auto",accent_color:"",...config};this._render();}
   set hass(h){this._hass=h;this._deviceMap=nDeviceMap(h);this._switchToDevice=nSwitchToDevice(h);this._render();}
   _toggleExpand(){this._expanded=!this._expanded;this._render();}
   _render(){if(!this.shadowRoot||!this._hass)return;const eid=this._config.entity;const entity=eid?this._hass.states[eid]:null;const t=nThemeVars(nIsDark(this._config.theme),this._config.accent_color||"");
@@ -141,7 +140,6 @@ class NetioOutletCardEditor extends HTMLElement{
   setConfig(c){this._config={...c};this._render();}
   _getSwitches(){if(!this._hass||!this._hass.entities)return[];return Object.values(this._hass.entities).filter(e=>e.platform==="netio"&&e.entity_id.startsWith("switch.")&&!e.disabled_by).map(e=>({entity_id:e.entity_id,name:this._hass.states[e.entity_id]?.attributes?.friendly_name||e.entity_id})).sort((a,b)=>a.name.localeCompare(b.name));}
   _render(){if(!this.shadowRoot)return;const sw=this._getSwitches(),cur=this._config.entity||"";
-    this.shadowRoot.innerHTML=`<style>${nEditorStyles()}</style><div class="editor"><div class="field"><label>${nT("select_entity")}</label><select id="entity"><option value="">-- ${nT("select_entity")} --</option>${sw.map(s=>`<option value="${s.entity_id}" ${s.entity_id===cur?'selected':''}>${nEscape(s.name)}</option>`).join("")}</select></div><div class="field"><label>${nT("name")}</label><input type="text" id="name" value="${nEscape(this._config.name||'')}" placeholder="${nT("auto")}"/><div class="hint">${nT("label_hint")}</div></div><div class="field"><label>${nT("accent_color")}</label><div style="display:flex;gap:8px;align-items:center;"><input type="color" id="accent_color" value="${this._config.accent_color||'#006B3F'}" style="width:48px;height:36px;padding:2px;border-radius:8px;cursor:pointer;"/><input type="text" id="accent_hex" value="${this._config.accent_color||'#006B3F'}" placeholder="#006B3F" style="flex:1;"/><button id="accent_reset" style="padding:6px 10px;border-radius:8px;border:1px solid var(--divider-color,#ddd);background:transparent;cursor:pointer;font-size:12px;">↺ ${nT("reset")}</button></div></div><div class="field"><label>${nT("design")}</label><select id="theme"><option value="auto" ${this._config.theme==='auto'?'selected':''}>${nT("auto")}</option><option value="dark" ${this._config.theme==='dark'?'selected':''}>${nT("dark")}</option><option value="light" ${this._config.theme==='light'?'selected':''}>${nT("light")}</option></select></div><div class="checkbox-field"><input type="checkbox" id="show_energy" ${this._config.show_energy!==false?'checked':''}/><label for="show_energy">${nT("show_energy")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_restart" ${this._config.show_restart!==false?'checked':''}/><label for="show_restart">${nT("show_restart")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_short_on" ${this._config.show_short_on!==false?'checked':''}/><label for="show_short_on">${nT("show_short_on")}</label></div><div class="checkbox-field"><input type="checkbox" id="show_toggle" ${this._config.show_toggle!==false?'checked':''}/><label for="show_toggle">${nT("show_toggle")}</label></div></div>`;
     this.shadowRoot.getElementById("entity").addEventListener("change",e=>{this._config.entity=e.target.value;this._fire();});
     this.shadowRoot.getElementById("name").addEventListener("change",e=>{this._config.name=e.target.value.trim();this._fire();});
     const cp=this.shadowRoot.getElementById("accent_color"),ch=this.shadowRoot.getElementById("accent_hex");
@@ -149,7 +147,7 @@ class NetioOutletCardEditor extends HTMLElement{
     ch.addEventListener("change",e=>{const v=e.target.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){cp.value=v;this._config.accent_color=v;this._fire();}});
     this.shadowRoot.getElementById("accent_reset").addEventListener("click",()=>{cp.value="#006B3F";ch.value="#006B3F";this._config.accent_color="";this._fire();});
     this.shadowRoot.getElementById("theme").addEventListener("change",e=>{this._config.theme=e.target.value;this._fire();});
-    ["show_energy","show_restart","show_short_on","show_toggle"].forEach(id=>{this.shadowRoot.getElementById(id).addEventListener("change",e=>{this._config[id]=e.target.checked;this._fire();});});
+    ["show_energy"].forEach(id=>{this.shadowRoot.getElementById(id).addEventListener("change",e=>{this._config[id]=e.target.checked;this._fire();});});
   }
   _fire(){this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config},bubbles:true,composed:true}));}
 }
