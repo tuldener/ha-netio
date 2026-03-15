@@ -44,9 +44,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     hass.http.register_static_path(
                         "/netio/netio-card.js", str(card_path), cache_headers=False
                     )
-                except AttributeError:
-                    _LOGGER.warning("Could not register Lovelace card resource")
-            _CARD_REGISTERED = True
+                except (AttributeError, RuntimeError):
+                    pass  # Route already registered
+            except RuntimeError:
+                pass  # Route already registered by another config entry
+        _CARD_REGISTERED = True
 
     host = entry.data[CONF_HOST]
     port = entry.data[CONF_PORT]
