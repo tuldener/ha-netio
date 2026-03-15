@@ -17,7 +17,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import NetioApiError
 from .const import ACTION_OFF, ACTION_ON, DOMAIN, STATE_OUTPUT_ON
-from .coordinator import NetioConfigEntry, NetioCoordinator
+from homeassistant.config_entries import ConfigEntry
+from .coordinator import NetioCoordinator
 from .entity import NetioEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: NetioConfigEntry,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up NETIO switches from a config entry."""
