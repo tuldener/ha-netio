@@ -8,12 +8,15 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import NetioApiClient, NetioApiError, NetioAuthError, NetioConnectionError
-from .const import DEFAULT_PASSWORD, DEFAULT_USERNAME, DOMAIN
+from .const import (
+    CONF_ENABLE_RESTART, CONF_ENABLE_SHORT_ON, CONF_ENABLE_TOGGLE,
+    DEFAULT_PASSWORD, DEFAULT_USERNAME, DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,6 +74,11 @@ class NetioConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self._discovered_host: str | None = None
         self._discovered_mac: str | None = None
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        """Get the options flow handler."""
+        return NetioOptionsFlow(config_entry)
 
     async def async_step_dhcp(
         self, discovery_info: DhcpServiceInfo
@@ -214,3 +222,80 @@ class NetioConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )
+
+
+class NetioOptionsFlow(OptionsFlow):
+    """Handle NETIO options flow.
+
+    Allows enabling/disabling button entity types (Restart, Short ON, Toggle)
+    for all outputs of the device. Disabled entities are removed from
+    hass.states and won't appear in Lovelace cards.
+    """
+
+    def __init__(self, config_entry) -> None:
+        """Initialize the options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            new_options = {
+                CONF_ENABLE_RESTART: user_input[CONF_ENABLE_RESTART],
+                CONF_ENABLE_SHORT_ON: user_input[CONF_ENABLE_SHORT_ON],
+                CONF_ENABLE_TOGGLE: user_input[CONF_ENABLE_TOGGLE],
+            }
+
+            # Enable/disable button entities in the entity registry
+            from homeassistant.helpers import entity_registry as er
+
+            ent_reg = er.async_get(self.hass)
+            entries = er.async_entries_for_config_entry(
+                ent_reg, self._config_entry.entry_id
+            )
+
+            for entry in entries:
+                if not entry.entity_id.startswith("button."):
+                    continue
+
+                should_disable = False
+                if entry.entity_id.endswith("_restart"):
+                    should_disable = not new_options[CONF_ENABLE_RESTART]
+                elif entry.entity_id.endswith("_short_on"):
+                    should_disable = not new_options[CONF_ENABLE_SHORT_ON]
+                elif entry.entity_id.endswith("_toggle"):
+                    should_disable = not new_options[CONF_ENABLE_TOGGLE]
+
+                if should_disable and entry.disabled_by is None:
+                    ent_reg.async_update_entity(
+                        entry.entity_id,
+                        disabled_by=er.RegistryEntryDisabler.INTEGRATION,
+                    )
+                elif not should_disable and entry.disabled_by is not None:
+                    ent_reg.async_update_entity(
+                        entry.entity_id, disabled_by=None
+                    )
+
+            return self.async_create_entry(title="", data=new_options)
+
+        # Current options with defaults
+        options = self._config_entry.options
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_ENABLE_RESTART,
+                    default=options.get(CONF_ENABLE_RESTART, True),
+                ): bool,
+                vol.Optional(
+                    CONF_ENABLE_SHORT_ON,
+                    default=options.get(CONF_ENABLE_SHORT_ON, True),
+                ): bool,
+                vol.Optional(
+                    CONF_ENABLE_TOGGLE,
+                    default=options.get(CONF_ENABLE_TOGGLE, True),
+                ): bool,
+            }
+        )
+
+        return self.async_show_form(step_id="init", data_schema=schema)
