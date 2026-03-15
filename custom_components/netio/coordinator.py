@@ -67,7 +67,9 @@ class NetioCoordinator(DataUpdateCoordinator[NetioDeviceState]):
         from homeassistant.helpers import device_registry as dr
 
         agent = state.agent
-        serial = self.device_serial
+        # Compute serial from the current state, not self.device_serial,
+        # because self.data may still be None during first poll.
+        serial = agent.serial_number or (agent.mac.replace(":", "") if agent.mac else self.config_entry.entry_id)
         device_name = agent.device_name or agent.model or "NETIO Device"
 
         # Check if any name actually changed
