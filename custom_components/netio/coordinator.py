@@ -38,6 +38,8 @@ class NetioCoordinator(DataUpdateCoordinator[NetioDeviceState]):
     ) -> None:
         """Initialize the coordinator."""
         self.client = client
+        self._last_device_name: str | None = None
+        self._last_output_names: dict[int, str] = {}
         super().__init__(
             hass,
             _LOGGER,
@@ -49,13 +51,61 @@ class NetioCoordinator(DataUpdateCoordinator[NetioDeviceState]):
     async def _async_update_data(self) -> NetioDeviceState:
         """Fetch state from the NETIO device."""
         try:
-            return await self.client.get_state()
+            state = await self.client.get_state()
         except NetioAuthError as err:
             raise UpdateFailed(f"Authentication failed: {err}") from err
         except NetioConnectionError as err:
             raise UpdateFailed(f"Connection error: {err}") from err
         except NetioApiError as err:
             raise UpdateFailed(f"API error: {err}") from err
+
+        self._update_device_names(state)
+        return state
+
+    def _update_device_names(self, state: NetioDeviceState) -> None:
+        """Update device registry names if they changed on the NETIO device."""
+        from homeassistant.helpers import device_registry as dr
+
+        agent = state.agent
+        serial = self.device_serial
+        device_name = agent.device_name or agent.model or "NETIO Device"
+
+        # Check if any name actually changed
+        current_output_names: dict[int, str] = {}
+        if state.outputs:
+            for out in state.outputs:
+                current_output_names[out.id] = out.name or f"Output {out.id}"
+
+        if (
+            device_name == self._last_device_name
+            and current_output_names == self._last_output_names
+        ):
+            return  # Nothing changed
+
+        dev_reg = dr.async_get(self.hass)
+
+        # Update parent device name
+        if device_name != self._last_device_name:
+            device = dev_reg.async_get_device(identifiers={(DOMAIN, serial)})
+            if device and device.name != device_name:
+                dev_reg.async_update_device(device.id, name=device_name)
+                _LOGGER.debug("Updated device name: %s", device_name)
+            self._last_device_name = device_name
+
+        # Update sub-device names (per outlet)
+        for output_id, output_name in current_output_names.items():
+            if output_name != self._last_output_names.get(output_id):
+                full_name = f"{device_name} {output_name}"
+                sub_device = dev_reg.async_get_device(
+                    identifiers={(DOMAIN, f"{serial}_output_{output_id}")}
+                )
+                if sub_device and sub_device.name != full_name:
+                    dev_reg.async_update_device(sub_device.id, name=full_name)
+                    _LOGGER.debug(
+                        "Updated output %d name: %s", output_id, full_name
+                    )
+
+        self._last_output_names = current_output_names
 
     @property
     def device_serial(self) -> str:
