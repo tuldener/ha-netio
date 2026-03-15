@@ -44,7 +44,7 @@ class NetioEntity(CoordinatorEntity[NetioCoordinator]):
             model=agent.model,
             sw_version=agent.version,
             serial_number=serial,
-            configuration_url=coordinator.client._base_url,
+            configuration_url=coordinator.client.web_url,
         )
 
 
