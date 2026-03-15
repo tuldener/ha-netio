@@ -31,5 +31,18 @@
     "abort": {
       "already_configured": "This device is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "NETIO Button Entities",
+        "description": "Choose which action buttons are enabled for all outputs of this device. Disabled buttons will not appear in Lovelace cards.",
+        "data": {
+          "enable_restart": "Restart button (Short OFF)",
+          "enable_short_on": "Short ON button",
+          "enable_toggle": "Toggle button"
+        }
+      }
+    }
   }
 }
