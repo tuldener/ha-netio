@@ -344,6 +344,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.8 (2025-03-15)
+
+**Fixed**
+- **Editor dropdowns show saved selection** — The Device and Outlet card editors now correctly show the previously selected device/entity when reopened. Fixed a race condition where `set hass()` could arrive before `setConfig()`, causing the dropdown to render with empty config and never update. The editor now re-renders when the key selection (entity or device_id) changes, but NOT when labels/icons/title change (preserving text editing).
+
 ### v0.9.7 (2025-03-15)
 
 **Fixed**
