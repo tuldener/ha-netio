@@ -344,6 +344,36 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.9.0 (2025-03-15)
+
+**Compliance review — HA & HACS standards verified**
+
+All files reviewed against Home Assistant and HACS requirements:
+
+- `manifest.json`: domain, name, version, documentation, issue_tracker, codeowners, iot_class, config_flow, dhcp, after_dependencies — all present and correct. Removed empty `requirements: []`.
+- `config_flow.py`: ConfigFlow, OptionsFlow, and Reconfigure flow all implemented.
+- `strings.json` ↔ `translations/en.json` ↔ `translations/de.json`: all keys in sync.
+- `hacs.json`: name and render_readme set.
+- `LICENSE`: present.
+- `.github/workflows/validate.yaml`: HACS and hassfest validation on push/PR/daily.
+
+**Fixed**
+- **Button entities now have `EntityCategory.CONFIG`** — Restart, Short ON, and Toggle buttons are correctly categorized as configuration entities per HA best practices.
+- **Removed empty `requirements` from manifest.json** — hassfest recommends omitting the key entirely if empty.
+
+**Verified (no changes needed)**
+- Sensor device classes (`SensorDeviceClass`) and state classes (`SensorStateClass`) correctly set on all sensors.
+- Switch device class: `SwitchDeviceClass.OUTLET`.
+- `_attr_has_entity_name = True` on all entity base classes.
+- `DataUpdateCoordinator` with `async_config_entry_first_refresh`.
+- `runtime_data` pattern (modern, no `hass.data[DOMAIN]`).
+- No blocking I/O in event loop — all network via `aiohttp`.
+- Proper `async_setup_entry` / `async_unload_entry` in `__init__.py`.
+- All 4 platforms: switch, sensor, binary_sensor, button.
+- 3 Lovelace cards: netio-card, netio-device-card, netio-outlet-card (6 custom elements total).
+- Card JS syntax valid, 3 cards registered with `window.customCards`.
+- icon.png and logo.png present.
+
 ### v0.8.5 (2025-03-15)
 
 **Changed**
