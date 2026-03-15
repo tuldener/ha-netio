@@ -333,6 +333,11 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.7.2 (2025-03-15)
+
+**Fixed**
+- **NETIO logo centered in header icon** — The NETIO wordmark is now properly centered (vertically and horizontally) within the green header icon box.
+
 ### v0.7.1 (2025-03-15)
 
 **Fixed**
