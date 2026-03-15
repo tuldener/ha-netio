@@ -242,6 +242,10 @@ class NetioApiClient:
         self._owns_session = session is None
         self._verify_ssl = verify_ssl
         self._url = f"{self._base_url}{NETIO_JSON_ENDPOINT}"
+        # Web admin URL (without API port)
+        from urllib.parse import urlparse
+        parsed = urlparse(self._base_url)
+        self.web_url = f"{parsed.scheme}://{parsed.hostname}"
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create the aiohttp session."""
