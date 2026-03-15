@@ -107,9 +107,17 @@ One binary sensor per digital input (e.g. PowerDIN 4PZ).
 
 Plus an S0 pulse counter sensor per input.
 
-## Lovelace Card
+## Lovelace Cards
 
-The integration includes a custom Lovelace card with glassmorphism design, inspired by [Bubble Card](https://github.com/Clooos/Bubble-Card).
+The integration includes three custom Lovelace cards with glassmorphism design, inspired by [Bubble Card](https://github.com/Clooos/Bubble-Card).
+
+![NETIO Device Card](docs/card-preview.png)
+
+| Card | Description |
+|------|-------------|
+| `netio-card` | All NETIO outlets across **all** devices |
+| `netio-device-card` | All outlets of **one** specific NETIO device |
+| `netio-outlet-card` | **Single** outlet |
 
 ### Installation
 
