@@ -32,6 +32,15 @@
           "password": "Password",
           "use_ssl": "Use HTTPS"
         }
+      },
+      "buttons": {
+        "title": "Button Entities",
+        "description": "Choose which action buttons to enable for all outputs. You can change this later under Configure.",
+        "data": {
+          "enable_restart": "Restart button (Short OFF)",
+          "enable_short_on": "Short ON button",
+          "enable_toggle": "Toggle button"
+        }
       }
     },
     "error": {
