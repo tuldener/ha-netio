@@ -74,6 +74,8 @@ class NetioConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self._discovered_host: str | None = None
         self._discovered_mac: str | None = None
+        self._pending_data: dict[str, Any] = {}
+        self._pending_title: str = "NETIO"
 
     @staticmethod
     def async_get_options_flow(config_entry):
@@ -203,16 +205,15 @@ class NetioConfigFlow(ConfigFlow, domain=DOMAIN):
                     or state.agent.model
                     or f"NETIO {host}"
                 )
-                return self.async_create_entry(
-                    title=title,
-                    data={
-                        CONF_HOST: host,
-                        CONF_PORT: port,
-                        CONF_USERNAME: username,
-                        CONF_PASSWORD: password,
-                        CONF_USE_SSL: use_ssl,
-                    },
-                )
+                self._pending_data = {
+                    CONF_HOST: host,
+                    CONF_PORT: port,
+                    CONF_USERNAME: username,
+                    CONF_PASSWORD: password,
+                    CONF_USE_SSL: use_ssl,
+                }
+                self._pending_title = title
+                return await self.async_step_buttons()
 
         return self.async_show_form(
             step_id="dhcp_confirm",
@@ -265,21 +266,46 @@ class NetioConfigFlow(ConfigFlow, domain=DOMAIN):
                     or f"NETIO {host}"
                 )
 
-                return self.async_create_entry(
-                    title=title,
-                    data={
-                        CONF_HOST: host,
-                        CONF_PORT: port,
-                        CONF_USERNAME: username,
-                        CONF_PASSWORD: password,
-                        CONF_USE_SSL: use_ssl,
-                    },
-                )
+                self._pending_data = {
+                    CONF_HOST: host,
+                    CONF_PORT: port,
+                    CONF_USERNAME: username,
+                    CONF_PASSWORD: password,
+                    CONF_USE_SSL: use_ssl,
+                }
+                self._pending_title = title
+                return await self.async_step_buttons()
 
         return self.async_show_form(
             step_id="user",
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
+        )
+
+    async def async_step_buttons(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Second step: configure which button entities to enable."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=self._pending_title,
+                data=self._pending_data,
+                options={
+                    CONF_ENABLE_RESTART: user_input.get(CONF_ENABLE_RESTART, True),
+                    CONF_ENABLE_SHORT_ON: user_input.get(CONF_ENABLE_SHORT_ON, True),
+                    CONF_ENABLE_TOGGLE: user_input.get(CONF_ENABLE_TOGGLE, True),
+                },
+            )
+
+        return self.async_show_form(
+            step_id="buttons",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_ENABLE_RESTART, default=True): bool,
+                    vol.Optional(CONF_ENABLE_SHORT_ON, default=True): bool,
+                    vol.Optional(CONF_ENABLE_TOGGLE, default=True): bool,
+                }
+            ),
         )
 
 
