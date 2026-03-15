@@ -71,12 +71,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry.runtime_data = coordinator
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    # Force-update configuration_url in device registry (HA caches it)
+    # Explicitly register the parent device BEFORE platform setup.
+    # This ensures the parent device exists so sub-devices can reference
+    # it via via_device. Without this, if no global entities exist,
+    # the parent device would never be created and sub-devices would
+    # have via_device_id=null.
     from homeassistant.helpers import device_registry as dr
     dev_reg = dr.async_get(hass)
     serial = coordinator.device_serial
+    agent = coordinator.data.agent
+    dev_reg.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, serial)},
+        name=agent.device_name or agent.model or "NETIO Device",
+        manufacturer="NETIO products a.s.",
+        model=agent.model,
+        sw_version=agent.version,
+        serial_number=serial,
+        configuration_url=client.web_url,
+    )
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Force-update configuration_url in device registry (HA caches it)
     device = dev_reg.async_get_device(identifiers={(DOMAIN, serial)})
     if device and device.configuration_url != client.web_url:
         dev_reg.async_update_device(
