@@ -1,4 +1,4 @@
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "2.0.0";
 
 // ─── i18n ───────────────────────────────────────────────────────────
 const _netioLang = () => {
@@ -16,9 +16,16 @@ const _netioI18n = {
     title: 'Titel', accent_color: 'Akzentfarbe', reset: 'Standard',
     accent_hint: 'Standard: #006B3F (NETIO Grün)', design: 'Design',
     auto: 'Automatisch', dark: 'Dunkel', light: 'Hell',
-    show_energy: 'Energiedaten anzeigen', show_actions: 'Aktions-Buttons anzeigen',
+    show_energy: 'Energiedaten anzeigen',
+    show_restart: 'Neustart-Button anzeigen',
+    show_short_on: 'Kurz-Ein-Button anzeigen',
+    show_toggle: 'Umschalten-Button anzeigen',
     desc_main: 'Alle NETIO Ausgänge mit Steuerung und Metering',
+    desc_outlet: 'Einzelner NETIO Ausgang mit Steuerung',
     global: 'Gerät',
+    select_entity: 'Ausgang wählen',
+    no_entity: 'Kein Ausgang ausgewählt',
+    no_entity_hint: 'Wähle einen NETIO Ausgang in der Konfiguration',
   },
   en: {
     outputs: 'Outputs', output: 'Output', output_1: 'Output', output_n: 'Outputs',
@@ -31,9 +38,16 @@ const _netioI18n = {
     title: 'Title', accent_color: 'Accent color', reset: 'Default',
     accent_hint: 'Default: #006B3F (NETIO Green)', design: 'Design',
     auto: 'Automatic', dark: 'Dark', light: 'Light',
-    show_energy: 'Show energy data', show_actions: 'Show action buttons',
+    show_energy: 'Show energy data',
+    show_restart: 'Show restart button',
+    show_short_on: 'Show short ON button',
+    show_toggle: 'Show toggle button',
     desc_main: 'All NETIO outputs with control and metering',
+    desc_outlet: 'Single NETIO outlet with control',
     global: 'Device',
+    select_entity: 'Select outlet',
+    no_entity: 'No outlet selected',
+    no_entity_hint: 'Select a NETIO outlet in the card configuration',
   },
 };
 function nT(key) { const l = _netioLang(); return (_netioI18n[l] || _netioI18n['en'])[key] || _netioI18n['en'][key] || key; }
@@ -255,7 +269,16 @@ if (!window.customCards.find(c => c.type === "netio-card")) {
   window.customCards.push({
     type: "netio-card",
     name: "NETIO",
-    description: "NETIO PDU control card with energy metering",
+    description: nT("desc_main"),
+    preview: true,
+    documentationURL: "https://github.com/tuldener/ha-netio",
+  });
+}
+if (!window.customCards.find(c => c.type === "netio-outlet-card")) {
+  window.customCards.push({
+    type: "netio-outlet-card",
+    name: "NETIO Outlet",
+    description: nT("desc_outlet"),
     preview: true,
     documentationURL: "https://github.com/tuldener/ha-netio",
   });
@@ -275,11 +298,17 @@ class NetioCard extends HTMLElement {
   }
 
   static getConfigElement() { return document.createElement("netio-card-editor"); }
-  static getStubConfig() { return { title: "NETIO", entities: [], show_energy: true, show_actions: true, theme: "auto", accent_color: "" }; }
+  static getStubConfig() { return { title: "NETIO", entities: [], show_energy: true, show_restart: true, show_short_on: true, show_toggle: true, theme: "auto", accent_color: "" }; }
 
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
-    this._config = { title: "NETIO", entities: [], show_energy: true, show_actions: true, theme: "auto", accent_color: "", ...config };
+    this._config = { title: "NETIO", entities: [], show_energy: true, show_restart: true, show_short_on: true, show_toggle: true, theme: "auto", accent_color: "", ...config };
+    // Migrate old show_actions to individual flags
+    if (config.show_actions === false && !("show_restart" in config)) {
+      this._config.show_restart = false;
+      this._config.show_short_on = false;
+      this._config.show_toggle = false;
+    }
     this._rendered = false;
     this._render();
   }
@@ -476,9 +505,9 @@ class NetioCard extends HTMLElement {
           <button class="n-btn ${isOn ? 'off-btn' : 'on-btn'}" data-switch="${o.entityId}">
             ${nSvg('power', 16)} ${isOn ? nT("off") : nT("on")}
           </button>
-          ${this._config.show_actions && toggleBtn ? `<button class="n-btn primary" data-press="${toggleBtn}">${nSvg('toggle', 16)} ${nT("toggle")}</button>` : ''}
-          ${this._config.show_actions && restartBtn ? `<button class="n-btn danger" data-press="${restartBtn}">${nSvg('restart', 16)} ${nT("restart")}</button>` : ''}
-          ${this._config.show_actions && shortOnBtn ? `<button class="n-btn" data-press="${shortOnBtn}">${nSvg('timer', 16)} ${nT("short_on")}</button>` : ''}
+          ${this._config.show_toggle !== false && toggleBtn ? `<button class="n-btn primary" data-press="${toggleBtn}">${nSvg('toggle', 16)} ${nT("toggle")}</button>` : ''}
+          ${this._config.show_restart !== false && restartBtn ? `<button class="n-btn danger" data-press="${restartBtn}">${nSvg('restart', 16)} ${nT("restart")}</button>` : ''}
+          ${this._config.show_short_on !== false && shortOnBtn ? `<button class="n-btn" data-press="${shortOnBtn}">${nSvg('timer', 16)} ${nT("short_on")}</button>` : ''}
         </div>
         ${this._config.show_energy && (current != null || load != null || energy != null) ? `
         <div class="energy-grid">
@@ -555,7 +584,9 @@ class NetioCardEditor extends HTMLElement {
           </select>
         </div>
         <div class="checkbox-field"><input type="checkbox" id="show_energy" ${this._config.show_energy !== false ? 'checked' : ''} /><label for="show_energy">${nT("show_energy")}</label></div>
-        <div class="checkbox-field"><input type="checkbox" id="show_actions" ${this._config.show_actions !== false ? 'checked' : ''} /><label for="show_actions">${nT("show_actions")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_restart" ${this._config.show_restart !== false ? 'checked' : ''} /><label for="show_restart">${nT("show_restart")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_short_on" ${this._config.show_short_on !== false ? 'checked' : ''} /><label for="show_short_on">${nT("show_short_on")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_toggle" ${this._config.show_toggle !== false ? 'checked' : ''} /><label for="show_toggle">${nT("show_toggle")}</label></div>
       </div>
     `;
     this.shadowRoot.getElementById("title").addEventListener("change", e => { this._config.title = e.target.value; this._fire(); });
@@ -566,18 +597,247 @@ class NetioCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("accent_reset").addEventListener("click", () => { cp.value = "#006B3F"; ch.value = "#006B3F"; this._config.accent_color = ""; this._fire(); });
     this.shadowRoot.getElementById("theme").addEventListener("change", e => { this._config.theme = e.target.value; this._fire(); });
     this.shadowRoot.getElementById("show_energy").addEventListener("change", e => { this._config.show_energy = e.target.checked; this._fire(); });
-    this.shadowRoot.getElementById("show_actions").addEventListener("change", e => { this._config.show_actions = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_restart").addEventListener("change", e => { this._config.show_restart = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_short_on").addEventListener("change", e => { this._config.show_short_on = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_toggle").addEventListener("change", e => { this._config.show_toggle = e.target.checked; this._fire(); });
   }
 
   _fire() { this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true })); }
 }
 
+// ─── Outlet Card (single outlet) ─────────────────────────────────────
+class NetioOutletCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = null;
+    this._deviceMap = {};
+    this._switchToDevice = {};
+  }
+
+  static getConfigElement() { return document.createElement("netio-outlet-card-editor"); }
+  static getStubConfig() { return { entity: "", show_energy: true, show_restart: true, show_short_on: true, show_toggle: true, theme: "auto", accent_color: "" }; }
+
+  setConfig(config) {
+    if (!config) throw new Error("Invalid configuration");
+    this._config = { entity: "", show_energy: true, show_restart: true, show_short_on: true, show_toggle: true, theme: "auto", accent_color: "", ...config };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._deviceMap = nDeviceMap(hass);
+    this._switchToDevice = nSwitchToDevice(hass);
+    this._render();
+  }
+
+  _sensorVal(switchEntityId, sensorKey) {
+    if (!this._hass) return null;
+    const devId = this._switchToDevice[switchEntityId];
+    if (!devId || !this._deviceMap[devId]) return null;
+    const sensorEid = this._deviceMap[devId][sensorKey];
+    if (!sensorEid) return null;
+    const state = this._hass.states[sensorEid];
+    if (!state) return null;
+    const v = parseFloat(state.state);
+    return isNaN(v) ? null : v;
+  }
+
+  _findButtonEntity(switchEntityId, action) {
+    if (!this._hass) return null;
+    const devId = this._switchToDevice[switchEntityId];
+    if (!devId || !this._deviceMap[devId]) return null;
+    return this._deviceMap[devId][action] || null;
+  }
+
+  _render() {
+    if (!this.shadowRoot || !this._hass) return;
+    const eid = this._config.entity;
+    const entity = eid ? this._hass.states[eid] : null;
+    const t = nThemeVars(nIsDark(this._config.theme), this._config.accent_color || "");
+
+    if (!entity) {
+      this.shadowRoot.innerHTML = `
+        <style>${nBaseStyles(t)}</style>
+        <div class="n-card">
+          <div class="n-empty">${nSvg('plug', 48)}<p>${nT("no_entity")}</p><span>${nT("no_entity_hint")}</span></div>
+        </div>`;
+      return;
+    }
+
+    const isOn = entity.state === "on";
+    const name = entity.attributes.friendly_name || eid;
+    const shortName = name.replace(/^NETIO\s+/i, "").replace(/^netio_/i, "").replace(/\s+Switch$/i, "") || name;
+
+    const current = this._sensorVal(eid, "current");
+    const load = this._sensorVal(eid, "load");
+    const energy = this._sensorVal(eid, "energy");
+    const pf = this._sensorVal(eid, "power_factor");
+
+    const restartBtn = this._findButtonEntity(eid, "restart");
+    const shortOnBtn = this._findButtonEntity(eid, "short_on");
+    const toggleBtn = this._findButtonEntity(eid, "toggle");
+
+    this.shadowRoot.innerHTML = `
+      <style>${nBaseStyles(t)}
+        .outlet-card { padding: 20px; }
+        .outlet-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+        .outlet-icon {
+          width: 48px; height: 48px; border-radius: 16px;
+          display: flex; align-items: center; justify-content: center;
+          transition: all 0.3s ease; flex-shrink: 0;
+        }
+        .outlet-icon.on { background: linear-gradient(135deg, ${t.accent}, #2e9e6e); color: white; }
+        .outlet-icon.off { background: ${t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}; color: ${t.textSec}; }
+        .outlet-info { flex: 1; min-width: 0; }
+        .outlet-name { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+        .outlet-status { font-size: 12px; color: ${t.textSec}; font-weight: 500; margin-top: 2px; }
+        .outlet-badge {
+          font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 12px; cursor: pointer;
+          transition: all 0.2s ease; white-space: nowrap;
+        }
+        .outlet-badge.on { color: #4caf50; background: ${t.isDark ? 'rgba(76,175,80,0.15)' : 'rgba(76,175,80,0.1)'}; }
+        .outlet-badge.on:hover { background: rgba(239,83,80,0.15); color: #ef5350; }
+        .outlet-badge.off { color: ${t.offColor}; background: ${t.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}; }
+        .outlet-badge.off:hover { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .outlet-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .outlet-energy { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+      </style>
+      <div class="n-card outlet-card">
+        <div class="outlet-header">
+          <div class="outlet-icon ${isOn ? 'on' : 'off'}">${nSvg(isOn ? 'plug' : 'power', 28)}</div>
+          <div class="outlet-info">
+            <div class="outlet-name">${nEscape(shortName)}</div>
+            <div class="outlet-status">${isOn && load != null ? `${load} W` : (isOn ? nT("on") : nT("off"))}</div>
+          </div>
+          <div class="outlet-badge ${isOn ? 'on' : 'off'}" data-switch="${eid}">${isOn ? nT("on") : nT("off")}</div>
+        </div>
+        ${(this._config.show_restart || this._config.show_short_on || this._config.show_toggle) ? `
+        <div class="outlet-actions">
+          ${this._config.show_toggle !== false && toggleBtn ? `<button class="n-btn primary" data-press="${toggleBtn}">${nSvg('toggle', 16)} ${nT("toggle")}</button>` : ''}
+          ${this._config.show_restart !== false && restartBtn ? `<button class="n-btn danger" data-press="${restartBtn}">${nSvg('restart', 16)} ${nT("restart")}</button>` : ''}
+          ${this._config.show_short_on !== false && shortOnBtn ? `<button class="n-btn" data-press="${shortOnBtn}">${nSvg('timer', 16)} ${nT("short_on")}</button>` : ''}
+        </div>` : ''}
+        ${this._config.show_energy && (current != null || load != null || energy != null) ? `
+        <div class="outlet-energy">
+          ${load != null ? `<div class="energy-chip"><div class="energy-val">${load}</div><div class="energy-label">W</div></div>` : ''}
+          ${current != null ? `<div class="energy-chip"><div class="energy-val">${current}</div><div class="energy-label">mA</div></div>` : ''}
+          ${energy != null ? `<div class="energy-chip"><div class="energy-val">${energy}</div><div class="energy-label">Wh</div></div>` : ''}
+          ${pf != null ? `<div class="energy-chip"><div class="energy-val">${pf.toFixed(2)}</div><div class="energy-label">PF</div></div>` : ''}
+        </div>` : ''}
+      </div>`;
+    this._attachEvents();
+  }
+
+  _attachEvents() {
+    const r = this.shadowRoot; if (!r) return;
+    r.querySelectorAll("[data-switch]").forEach(el => {
+      el.addEventListener("click", () => {
+        const eid = el.dataset.switch;
+        const isOn = this._hass.states[eid]?.state === "on";
+        this._hass.callService("switch", isOn ? "turn_off" : "turn_on", { entity_id: eid });
+      });
+    });
+    r.querySelectorAll("[data-press]").forEach(el => {
+      el.addEventListener("click", () => {
+        this._hass.callService("button", "press", { entity_id: el.dataset.press });
+      });
+    });
+  }
+
+  getCardSize() { return 2; }
+}
+
+
+// ─── Outlet Card Editor ──────────────────────────────────────────────
+class NetioOutletCardEditor extends HTMLElement {
+  constructor() { super(); this.attachShadow({ mode: "open" }); this._config = {}; this._hass = null; }
+
+  set hass(hass) { this._hass = hass; this._render(); }
+  setConfig(config) { this._config = { ...config }; this._render(); }
+
+  _getNetioSwitches() {
+    if (!this._hass || !this._hass.entities) return [];
+    return Object.values(this._hass.entities)
+      .filter(e => e.platform === "netio" && e.entity_id.startsWith("switch.") && !e.disabled_by)
+      .map(e => ({
+        entity_id: e.entity_id,
+        name: this._hass.states[e.entity_id]?.attributes?.friendly_name || e.entity_id,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  _render() {
+    if (!this.shadowRoot) return;
+    const switches = this._getNetioSwitches();
+    const curEntity = this._config.entity || "";
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; }
+        .editor { padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--primary-text-color, #333); }
+        input, select { width: 100%; padding: 8px 12px; border: 1px solid var(--divider-color, #ddd); border-radius: 8px; font-size: 14px; background: var(--card-background-color, #fff); color: var(--primary-text-color, #333); }
+        .hint { font-size: 11px; color: var(--secondary-text-color, #888); margin-top: 2px; }
+        .checkbox-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .checkbox-field input { width: auto; }
+      </style>
+      <div class="editor">
+        <div class="field">
+          <label>${nT("select_entity")}</label>
+          <select id="entity">
+            <option value="">-- ${nT("select_entity")} --</option>
+            ${switches.map(s => `<option value="${s.entity_id}" ${s.entity_id === curEntity ? 'selected' : ''}>${nEscape(s.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label>${nT("accent_color")}</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="color" id="accent_color" value="${this._config.accent_color || '#006B3F'}" style="width:48px;height:36px;padding:2px;border-radius:8px;cursor:pointer;" />
+            <input type="text" id="accent_hex" value="${this._config.accent_color || '#006B3F'}" placeholder="#006B3F" style="flex:1;" />
+            <button id="accent_reset" style="padding:6px 10px;border-radius:8px;border:1px solid var(--divider-color,#ddd);background:transparent;cursor:pointer;font-size:12px;">↺ ${nT("reset")}</button>
+          </div>
+        </div>
+        <div class="field"><label>${nT("design")}</label>
+          <select id="theme">
+            <option value="auto" ${this._config.theme === 'auto' ? 'selected' : ''}>${nT("auto")}</option>
+            <option value="dark" ${this._config.theme === 'dark' ? 'selected' : ''}>${nT("dark")}</option>
+            <option value="light" ${this._config.theme === 'light' ? 'selected' : ''}>${nT("light")}</option>
+          </select>
+        </div>
+        <div class="checkbox-field"><input type="checkbox" id="show_energy" ${this._config.show_energy !== false ? 'checked' : ''} /><label for="show_energy">${nT("show_energy")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_restart" ${this._config.show_restart !== false ? 'checked' : ''} /><label for="show_restart">${nT("show_restart")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_short_on" ${this._config.show_short_on !== false ? 'checked' : ''} /><label for="show_short_on">${nT("show_short_on")}</label></div>
+        <div class="checkbox-field"><input type="checkbox" id="show_toggle" ${this._config.show_toggle !== false ? 'checked' : ''} /><label for="show_toggle">${nT("show_toggle")}</label></div>
+      </div>`;
+
+    this.shadowRoot.getElementById("entity").addEventListener("change", e => { this._config.entity = e.target.value; this._fire(); });
+    const cp = this.shadowRoot.getElementById("accent_color");
+    const ch = this.shadowRoot.getElementById("accent_hex");
+    cp.addEventListener("input", e => { ch.value = e.target.value; this._config.accent_color = e.target.value; this._fire(); });
+    ch.addEventListener("change", e => { const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { cp.value = v; this._config.accent_color = v; this._fire(); } });
+    this.shadowRoot.getElementById("accent_reset").addEventListener("click", () => { cp.value = "#006B3F"; ch.value = "#006B3F"; this._config.accent_color = ""; this._fire(); });
+    this.shadowRoot.getElementById("theme").addEventListener("change", e => { this._config.theme = e.target.value; this._fire(); });
+    this.shadowRoot.getElementById("show_energy").addEventListener("change", e => { this._config.show_energy = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_restart").addEventListener("change", e => { this._config.show_restart = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_short_on").addEventListener("change", e => { this._config.show_short_on = e.target.checked; this._fire(); });
+    this.shadowRoot.getElementById("show_toggle").addEventListener("change", e => { this._config.show_toggle = e.target.checked; this._fire(); });
+  }
+
+  _fire() { this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true })); }
+}
+
+
 // ─── Define ─────────────────────────────────────────────────────────
 const _def = (n, c) => { if (!customElements.get(n)) customElements.define(n, c); };
 _def("netio-card", NetioCard);
 _def("netio-card-editor", NetioCardEditor);
+_def("netio-outlet-card", NetioOutletCard);
+_def("netio-outlet-card-editor", NetioOutletCardEditor);
 
-Promise.all([customElements.whenDefined("netio-card")]).then(() => {
+Promise.all([customElements.whenDefined("netio-card"), customElements.whenDefined("netio-outlet-card")]).then(() => {
   window.dispatchEvent(new Event("ll-rebuild"));
 });
 
