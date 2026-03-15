@@ -1,4 +1,4 @@
-const CARD_VERSION = "2.1.0";
+const CARD_VERSION = "2.1.1";
 const _netioLang = () => { try { return document.querySelector('home-assistant')?.hass?.language || 'en'; } catch(e) { return 'en'; } };
 const _netioI18n = {
   de: {
@@ -158,5 +158,5 @@ class NetioOutletCardEditor extends HTMLElement{
 const _def=(n,c)=>{if(!customElements.get(n))customElements.define(n,c);};
 _def("netio-card",NetioCard);_def("netio-card-editor",NetioCardEditor);
 _def("netio-outlet-card",NetioOutletCard);_def("netio-outlet-card-editor",NetioOutletCardEditor);
-Promise.all([customElements.whenDefined("netio-card"),customElements.whenDefined("netio-outlet-card")]).then(()=>{window.dispatchEvent(new Event("ll-rebuild"));});
+
 console.info(`%c NETIO-CARD %c v${CARD_VERSION} `,"color:white;background:#006B3F;font-weight:700;padding:2px 6px;border-radius:4px 0 0 4px;","color:#006B3F;background:#d4edda;font-weight:700;padding:2px 6px;border-radius:0 4px 4px 0;");
