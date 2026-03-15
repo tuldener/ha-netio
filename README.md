@@ -333,6 +333,12 @@ Both approaches can coexist — you can use ha-netio for the main integration an
 
 ## Changelog
 
+### v0.8.3 (2025-03-15)
+
+**Changed**
+- **Default icon is now `mdi:power-socket-eu`** — All three cards use the HA power socket icon instead of the built-in SVG plug icon. Custom icons via the icon picker still override this default.
+- **Output names show only the NETIO socket name** — Names like "stjane01 Kabine01" are now displayed as just "Kabine01". The hostname prefix is stripped by looking up the parent device name in the HA device registry. Falls back to stripping the first word for orphan devices. Custom labels still take priority.
+
 ### v0.8.2 (2025-03-15)
 
 **Fixed**
