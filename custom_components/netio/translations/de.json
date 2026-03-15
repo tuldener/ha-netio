@@ -21,6 +21,17 @@
           "password": "Passwort",
           "use_ssl": "HTTPS verwenden"
         }
+      },
+      "reconfigure": {
+        "title": "NETIO Verbindung ändern",
+        "description": "Verbindungseinstellungen für das NETIO Gerät anpassen.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "use_ssl": "HTTPS verwenden"
+        }
       }
     },
     "error": {
