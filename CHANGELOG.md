@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+### v1.2.3 (2026-03-17)
+
+#### Fixed
+- **Unified version numbering** — Card JS version and integration version are now identical (both `1.2.3`). The Lovelace resource URL now shows `/netio/netio-card.js?v=1.2.3` matching HACS. Previously the card had an independent version (4.x) which was confusing.
+
 ### v1.2.2 (2026-03-17)
 
 #### Changed
