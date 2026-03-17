@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+### v1.2.1 (2026-03-17)
+
+#### Fixed
+- **Auto-register Lovelace resource** — The card JS is now automatically registered as a Lovelace resource with version-busting URL (`/netio/netio-card.js?v=4.2.0`). On updates, the version parameter is automatically bumped, forcing the browser to load the new version. No more manual resource URL editing needed.
+- Added `lovelace` to `after_dependencies` to ensure resource registration works reliably.
+
 ### v1.2.0 (2026-03-17)
 
 #### Changed
