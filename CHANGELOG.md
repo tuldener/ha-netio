@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+### v1.2.4 (2026-03-17)
+
+#### Fixed
+- **Cards now use HA theme variables** — Background, border, border-radius, and box-shadow now inherit from `var(--ha-card-background)`, `var(--ha-card-border-radius)`, `var(--ha-card-border-color)`, and `var(--ha-card-box-shadow)`. This makes NETIO cards blend seamlessly with Bubble Card and any HA theme (transparent, glassmorphism, etc.).
+- **Removed hardcoded opaque backgrounds** — The `.n-card` wrapper no longer uses `backdrop-filter:blur()` or fixed rgba backgrounds. Output rows inside combined/device cards use subtle `rgba(255,255,255,0.04)` overlays instead of opaque card backgrounds.
+- **Outlet card fully transparent** — The standalone outlet card inherits the HA card background directly with no extra layer, matching Bubble Card's button card appearance exactly.
+
 ### v1.2.3 (2026-03-17)
 
 #### Fixed
