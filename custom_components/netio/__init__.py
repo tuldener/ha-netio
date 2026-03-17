@@ -38,13 +38,13 @@ async def _register_card(hass: HomeAssistant) -> None:
         _CARD_REGISTERED = True
         return
 
-    # Read version from JS file first line: const CARD_VERSION = "x.y.z";
+    # Use integration version from manifest.json for cache busting
     version = "0"
     try:
-        first_line = card_path.read_text(encoding="utf-8").split("\n", 1)[0]
-        if "CARD_VERSION" in first_line:
-            version = first_line.split('"')[1]
-    except (IndexError, OSError):
+        import json as _json
+        manifest = Path(__file__).parent / "manifest.json"
+        version = _json.loads(manifest.read_text(encoding="utf-8")).get("version", "0")
+    except (OSError, ValueError):
         pass
 
     card_url = f"{_CARD_URL_BASE}?v={version}"
