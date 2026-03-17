@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+### v1.2.2 (2026-03-17)
+
+#### Changed
+- **Outlet card: no green gradient background** — The single outlet card now has a flat dark background like Bubble Card, without the green power gradient. The gradient is kept on the combined and device cards where it helps distinguish multiple outputs.
+- Card version bumped to 4.2.1
+
 ### v1.2.1 (2026-03-17)
 
 #### Fixed
