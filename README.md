@@ -60,7 +60,7 @@ The integration auto-detects metering support from the device's JSON API respons
 
 ### Manual
 
-1. Copy `custom_components/netio` to your `config/custom_components/netio` directory
+1. Copy `custom_components/netio_products` to your `config/custom_components/netio_products` directory
 2. Restart Home Assistant
 
 ## Configuration
