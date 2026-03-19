@@ -355,7 +355,10 @@ class NetioOptionsFlow(OptionsFlow):
                 # Determine current visibility state (check both flags)
                 is_hidden = (
                     entry.hidden_by == er.RegistryEntryHider.INTEGRATION
-                    or entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION
+                    or entry.disabled_by in (
+                        er.RegistryEntryDisabler.INTEGRATION,
+                        er.RegistryEntryDisabler.DEVICE,
+                    )
                 )
 
                 if should_hide and not is_hidden:
