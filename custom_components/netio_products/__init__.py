@@ -155,6 +155,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Migrate button entities: disabled_by=integration → hidden_by=integration
+    # Versions before v1.3.7 used disabled_by which completely removes entities
+    # from hass.states. We want hidden_by which keeps them functional.
+    from homeassistant.helpers import entity_registry as er
+    ent_reg = er.async_get(hass)
+    for ent in er.async_entries_for_config_entry(ent_reg, entry.entry_id):
+        if (
+            ent.entity_id.startswith("button.")
+            and ent.disabled_by == er.RegistryEntryDisabler.INTEGRATION
+        ):
+            ent_reg.async_update_entity(
+                ent.entity_id,
+                disabled_by=None,
+                hidden_by=er.RegistryEntryHider.INTEGRATION,
+            )
+            _LOGGER.debug("Migrated %s: disabled_by → hidden_by", ent.entity_id)
+
     # Force-update configuration_url in device registry (HA caches it)
     device = dev_reg.async_get_device(identifiers={(DOMAIN, serial)})
     if device and device.configuration_url != client.web_url:
