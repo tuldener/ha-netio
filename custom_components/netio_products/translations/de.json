@@ -34,12 +34,12 @@
         }
       },
       "buttons": {
-        "title": "Button-Entitäten",
-        "description": "Wähle welche Aktions-Buttons für alle Ausgänge aktiviert werden. Dies kann später unter Konfigurieren geändert werden.",
+        "title": "NETIO Entitäten",
+        "description": "Wähle, welche Entitäten sichtbar sein sollen. Du kannst dies jederzeit in der Konfiguration anpassen.",
         "data": {
-          "enable_restart": "Neustart-Button (Short OFF)",
-          "enable_short_on": "Kurz-Ein-Button",
-          "enable_toggle": "Umschalten-Button"
+          "enable_restart": "Neustart (Short OFF)",
+          "enable_short_on": "Kurz Ein (Short ON)",
+          "enable_toggle": "Umschalten (Toggle)"
         }
       }
     },
@@ -55,12 +55,12 @@
   "options": {
     "step": {
       "init": {
-        "title": "NETIO Button-Entitäten",
-        "description": "Wähle welche Aktions-Buttons für alle Ausgänge dieses Geräts aktiviert sind. Deaktivierte Buttons werden in Kacheln nicht angezeigt.",
+        "title": "NETIO Entitäten",
+        "description": "Wähle, welche Entitäten sichtbar sein sollen. Du kannst dies jederzeit in der Konfiguration anpassen.",
         "data": {
-          "enable_restart": "Neustart-Button (Short OFF)",
-          "enable_short_on": "Kurz-Ein-Button",
-          "enable_toggle": "Umschalten-Button"
+          "enable_restart": "Neustart (Short OFF)",
+          "enable_short_on": "Kurz Ein (Short ON)",
+          "enable_toggle": "Umschalten (Toggle)"
         }
       }
     }
