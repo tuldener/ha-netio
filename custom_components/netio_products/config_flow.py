@@ -352,14 +352,23 @@ class NetioOptionsFlow(OptionsFlow):
                 elif entry.entity_id.endswith("_toggle"):
                     should_hide = not new_options[CONF_ENABLE_TOGGLE]
 
-                if should_hide and entry.hidden_by is None:
+                # Determine current visibility state (check both flags)
+                is_hidden = (
+                    entry.hidden_by == er.RegistryEntryHider.INTEGRATION
+                    or entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION
+                )
+
+                if should_hide and not is_hidden:
                     ent_reg.async_update_entity(
                         entry.entity_id,
+                        disabled_by=None,
                         hidden_by=er.RegistryEntryHider.INTEGRATION,
                     )
-                elif not should_hide and entry.hidden_by == er.RegistryEntryHider.INTEGRATION:
+                elif not should_hide and is_hidden:
                     ent_reg.async_update_entity(
-                        entry.entity_id, hidden_by=None
+                        entry.entity_id,
+                        disabled_by=None,
+                        hidden_by=None,
                     )
 
             return self.async_create_entry(title="", data=new_options)
